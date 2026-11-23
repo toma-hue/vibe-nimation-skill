@@ -13,37 +13,32 @@ short-uri animate 9:16 pentru TikTok și YouTube Shorts:
 
 Totul rulează **local și gratuit**: fără API-uri, abonamente sau credite.
 
-## Ce îți trebuie (Windows)
-- **Claude Code**
-- **Node.js 20+**: `winget install OpenJS.NodeJS.LTS`
-- **ffmpeg**: `winget install Gyan.FFmpeg`
-- **Python 3.10+**: `winget install Python.Python.3.11`
-- **Git**: `winget install Git.Git`
-- **Google Chrome** sau **Microsoft Edge** (Edge e deja instalat pe Windows)
-- Recomandat: o placă video **NVIDIA**. Merge și fără, dar mai încet.
-
-După instalare, deschide un terminal **nou**.
-
-## Instalare
-Skill-ul stă în proiectul tău, în `.claude\skills\vibe-nimation`:
+## Instalare (Windows) — o singură comandă
+Deschide **PowerShell** (Start → scrie „PowerShell” → Enter) și lipește:
 
 ```bash
-git clone https://github.com/<contul-tau>/vibe-nimation-skill.git "D:\Vibe-nimation\.claude\skills\vibe-nimation"
+powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/toma-hue/vibe-nimation-skill/main/install.ps1 | iex"
+```
+
+Scriptul instalează ce lipsește (Node.js, ffmpeg, Python 3.11, Git), creează proiectul `D:\Vibe-nimation` (sau
+`C:\Users\<nume>\Vibe-nimation` dacă nu ai partiția D:), cu folderul `Episoade\`, pune skill-ul în
+`.claude\skills\vibe-nimation` și rulează setup-ul (~4 GB de modele, o singură dată). Dacă îți cere să deschizi un
+PowerShell nou, fă-o și lipește aceeași comandă: continuă de unde a rămas. Recomandat: placă video NVIDIA.
+
+Pentru Mac/Linux sau instalare manuală: Node.js 20+, ffmpeg, Python 3.10+, Git, apoi:
+
+```bash
+git clone https://github.com/toma-hue/vibe-nimation-skill.git ~/Vibe-nimation/.claude/skills/vibe-nimation
 ```
 
 ```bash
-python "D:\Vibe-nimation\.claude\skills\vibe-nimation\scripts\setup.py" --root "D:\Vibe-nimation"
+python3 ~/Vibe-nimation/.claude/skills/vibe-nimation/scripts/setup.py --root ~/Vibe-nimation
 ```
-
-Setup-ul verifică uneltele, instalează mediul Python privat și modelele (~4 GB, o singură dată), testează placa
-video și generează o replică de test cu vocea naratorului. Rulează-l până scrie **All set**.
-
-Pe alt calculator, fără `--root`, folderul implicit e `C:\Users\<nume>\Vibe-nimation`.
 
 ## Folosire
-Deschide Claude Code în `D:\Vibe-nimation` și scrie, de exemplu:
+Pune episodul în `D:\Vibe-nimation\Episoade\`, deschide Claude Code în `D:\Vibe-nimation` și scrie, de exemplu:
 
-> Fă short-uri din episodul D:\Seriale\Stranger.Things.S01E01.mkv
+> Folosește vibe-nimation pe episodul D:\Vibe-nimation\Episoade\Stranger.Things.S01E01.mkv
 
 Claude analizează episodul și se oprește ca să-ți arate serialul detectat, fișele personajelor și lista de
 short-uri propuse, fiecare cu notă. După ce aprobi, le face pe rând.
