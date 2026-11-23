@@ -5,7 +5,8 @@
 
 The cast file is Vibe-nimation episodes/_Personaje/<Series>/characters.json (reference/CHARACTERS.md). It is
 shared by every episode of the series: add new characters to it, never start a second one.
-Writes next to it: <Name>.png (sheet) and _Distributie.png (everyone side by side).
+Writes next to it: <Name>.png (sheet), _Distributie.png (everyone side by side) and, for the mandatory review,
+_verificare/<Name>_capete.png (6 views × 8 expressions) + _verificare/<Name>_corp.png (10 poses × 5 views).
 """
 import argparse, json, shutil, subprocess, sys
 from pathlib import Path
@@ -29,6 +30,11 @@ def main():
         out = C / f'{safe_name(c["name"])}.png'
         r = subprocess.run([node, 'tools/page.mjs', f'sheet.html?id={c["id"]}', str(out)], cwd=R, env=env, capture_output=True, text=True)
         print(out if r.returncode == 0 else f'FAILED {c["id"]}: {r.stderr[-400:]}'); made.append(out)
+        V = C / '_verificare'; V.mkdir(exist_ok=True)
+        for page, suffix in (('heads', 'capete'), ('bodies', 'corp')):
+            o2 = V / f'{safe_name(c["name"])}_{suffix}.png'
+            r = subprocess.run([node, 'tools/page.mjs', f'rigcheck.html?id={c["id"]}&page={page}', str(o2)], cwd=R, env=env, capture_output=True, text=True)
+            print(o2 if r.returncode == 0 else f'FAILED {c["id"]} {page}: {r.stderr[-400:]}')
     r = subprocess.run([node, 'tools/page.mjs', 'sheet.html?cast=1', str(C / '_Distributie.png')], cwd=R, env=env, capture_output=True, text=True)
     print(C / '_Distributie.png' if r.returncode == 0 else f'FAILED cast: {r.stderr[-400:]}')
     meta['cast_file'] = str(cf); save_episode_meta(W, meta)

@@ -1,6 +1,6 @@
 ---
 name: vibe-nimation
-description: Turn a TV-series episode (a 20–40 min video file) into a set of narrated, animated 9:16 shorts for TikTok and YouTube Shorts, in one fixed 2D vector comic style with cutout/puppet-rigged characters and 2.5D parallax camera moves, all drawn in code on the user's computer for $0 (local Chatterbox narrator, local Whisper, no APIs). Analyses the episode (scenes, transcript, strengths/weaknesses, viral potential), detects the series, episode and characters, builds vector character sheets, plans shorts that cover the episode's story in order, stops for the user's approval, then voices, animates, scores, mixes, renders and delivers each short with a .txt of title, description, hashtags and a 1–10 viral score. Use whenever the user gives an episode / video file to turn into animated shorts, recap shorts, "vibe-nimation", or asks to continue, fix or re-render one of these shorts or character sheets.
+description: Turn a TV-series episode (a 20–40 min video file) into a set of narrated, animated 9:16 shorts for TikTok and YouTube Shorts, in one fixed 2D vector comic style with cutout/puppet-rigged characters and 2.5D parallax camera moves, all drawn in code on the user's computer for $0 (local Chatterbox narrator, local Whisper, no APIs). Analyses the episode (scenes, transcript, strengths/weaknesses, viral potential), detects the series, episode, characters and locations, builds vector character sheets and re-creates every place of the episode faithfully as a vector set, plans shorts that cover the episode's story in order, stops for the user's approval, then voices, animates, scores, mixes, renders and delivers each short with a .txt of title, description, hashtags and a 1–10 viral score. Use whenever the user gives an episode / video file to turn into animated shorts, recap shorts, "vibe-nimation", or asks to continue, fix or re-render one of these shorts or character sheets.
 ---
 
 # Vibe-nimation — episode → animated narrated shorts
@@ -20,7 +20,8 @@ then a NEW terminal) and ask before installing anything. Config: `~/.vibe-nimati
 
 Output root (from the config):
 ```
-<root>\Vibe-nimation episodes\_Personaje\<Series>\characters.json + <Name>.png + _Distributie.png   (shared by all episodes)
+<root>\Vibe-nimation episodes\_Personaje\<Series>\characters.json + <Name>.png + _Distributie.png + _verificare\   (shared by all episodes)
+<root>\Vibe-nimation episodes\_Locatii\<Series>\<id>.js + refs\ + <Name>.png                                       (shared by all episodes)
 <root>\Vibe-nimation episodes\<Series> - S01E01\S01E01 - Short 01 - <Title>.mp4 + .txt              (the deliverables)
 <root>\_lucru\<episode-id>\  analysis\, plan.md, plan.json, cast_render\, shorts\01\, shorts\02\ …   (work files)
 ```
@@ -37,6 +38,8 @@ Then, in this order, and do not skip any of it:
    other), matched to faces by when they speak and who is on screen; their look from the stills (hair style and colour,
    skin, clothes and colours, build, age, glasses, accessories). Write `series`, `season`, `episode`, `episode_title`
    into `<work>/episode.json` (keep the keys analyze.py wrote).
+   Also identify the **places** (locations): group the scenes by place and note what each contains in detail —
+   `reference/LOCATIONS.md` step 1–2.
 4. Write `<work>/analysis.md` (internal, for you; the user does not need it): follow `reference/ANALYSIS.md` — story
    beats in order, lore-critical vs filler, strengths and weaknesses (pacing, dialogue, emotion, humour, filler,
    visuals, cliffhangers), and the moments with viral potential (hook, conflict, punchline, emotion, controversy, twist).
@@ -53,9 +56,23 @@ viral score 1–10 with the reason.
 Cast file: `<root>/Vibe-nimation episodes/_Personaje/<Series>/characters.json` — format and every option in
 `reference/CHARACTERS.md`. If it exists (an earlier episode), reuse it and only add new characters or a changed look
 (new outfit → a second spec, e.g. `mike_winter`). Main and recurring characters get specs; one-scene extras can reuse a
-generic spec with different colours. Then `python SKILL/scripts/vn.py cast "<work>"` → one sheet per character
-(turnaround, expressions, poses, palette) + `_Distributie.png`. **Look at every sheet**; fix specs until each character
-is recognisable (hair shape and colour, signature clothing colours, glasses, build) and re-run.
+generic spec with different colours. Then `python SKILL/scripts/vn.py cast "<work>"` → per character: the sheet
+(`<Name>.png`: turnaround front / 3/4 / back / profile, expressions in every view, poses, palette), the two QA matrices
+(`_verificare/<Name>_capete.png` = 6 views × 8 expressions, `_verificare/<Name>_corp.png` = 10 poses × 5 views), and
+`_Distributie.png`.
+**Mandatory review — open every sheet and both matrices of every character, cell by cell** (checklist in
+`reference/CHARACTERS.md` → "Check"): recognisable vs the stills; in EVERY view the hair covers the head (no bald
+sides or temples, sideburns/hairline right), caps/hats/glasses sit on the head; every expression reads as its name in
+every view; every pose has attached limbs and both feet on the floor line. A problem in one character's spec → fix
+the spec; a problem every character would share → fix the rig (`SKILL/engine/src/core/rig.js`) and re-run `cast`
+for everyone. Never show the user a sheet you have not checked.
+
+## 3b · Locations (vector sets, reused across episodes)
+Follow `reference/LOCATIONS.md`: for every place the shorts use, pull stills (`--frames`) and colours (`--palette`),
+copy the stills to `_Locatii/<Series>/refs/`, write the module (`vn.py locations "<work>" --new <id>`, then rewrite it),
+and render `vn.py locations "<work>"`. **Open every location sheet** and compare the vector plate with the still side
+by side (layout, big shapes, colours, light, signature details, scale, no black in the 9:16 frames); fix until it is
+recognisably the same place. Reuse existing modules from earlier episodes.
 
 ## 4 · Style
 Read `reference/STYLE.md` once per session (the user's style sheet is `reference/style-sheet.webp`): 2D vector, comic,
@@ -65,9 +82,9 @@ expression changes on the beat, impact FX on the peaks.
 
 ## 5 · STOP — the user approves (one message, in Romanian)
 Show: the detected series / season / episode / title (and how sure you are), the cast with the path of
-`_Distributie.png` and each sheet, and the plan as a numbered list — for each short: title, what it covers (episode
+`_Distributie.png` and each sheet, the locations with each location sheet, and the plan as a numbered list — for each short: title, what it covers (episode
 times), estimated length (and why if > 90 s), mood, viral score /10 with one line of reason. Ask them to approve or
-change it. **Do not voice or animate anything until they say yes.** Apply their changes (plan or characters) and confirm.
+change it. **Do not voice or animate anything until they say yes.** Apply their changes (plan, characters or locations) and confirm.
 
 ## 6 · Make each short (in order: 01, 02, …)
 1. `python SKILL/scripts/vn.py new_short "<work>" <n>` → `<work>/shorts/NN/` (engine copy + cast + skeletons).
@@ -80,7 +97,8 @@ change it. **Do not voice or animate anything until they say yes.** Apply their 
 4. **Shots** — rewrite `src/shots.js` (the copied file is a complete working example: study it). One shot per beat
    (~2–5 s), cut on the narration (`T.L(i) - 0.15`), camera always moving, mix wide / medium / close-up / extreme
    close-up / over-the-shoulder, expression changes and FX land on words (`T.w('word', T.L(i))`), mimed lines use
-   `talk: T.talk(id, t)`. Sets, poses, expressions, FX, sound cues and music mood: `reference/SHOTS.md`.
+   `talk: T.talk(id, t)`. Every scene uses its **location module** from `src/sets/` (step 3b), not a generic set.
+   Sets, poses, expressions, views, FX, sound cues and music mood: `reference/SHOTS.md`.
 5. `python SKILL/scripts/vn.py build "<short>" --preview` → music (if missing), mix, error check, `review/all.jpg`.
    **Open `review/all.jpg`** and check every shot against `reference/STYLE.md` → "Check". For details:
    `node tools/capture.mjs frames review/f "12.3,40.1"` inside the short folder. Fix and re-run until right.
@@ -95,6 +113,8 @@ Summarise in Romanian: the folder, every short with its title, length and score,
 Offer precise changes ("short 3 slower", "Maya's jacket is green") and re-render only what changed.
 
 ## Rules
+- Captions: the current default style (white, black outline, the spoken word in yellow, pop-in) is the user's approved
+  look — keep it unless they ask.
 - Never put the episode's own audio, music, footage or frames into a short. Everything on screen is drawn in code;
   everything heard is the local narrator, the generated score and synthesized sound effects.
 - The narration is an original retelling (commentary/recap), not a transcript; quote characters only briefly.

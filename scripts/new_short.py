@@ -30,6 +30,11 @@ def main():
     cf = Path(meta['cast_file']) if meta.get('cast_file') else cast_dir(meta, cfg) / 'characters.json'
     if cf.exists(): shutil.copy2(cf, P / 'data' / 'characters.json')
     else: print('! no cast file yet — run vn.py cast first; characters will be missing')
+    # the series' location modules → src/sets/ (import * as diner from './sets/diner.js')
+    from common import episodes_root, safe_name
+    LD = Path(meta['locations_dir']) if meta.get('locations_dir') else episodes_root(cfg) / '_Locatii' / safe_name(meta.get('series', 'Unknown series'))
+    (P / 'src' / 'sets').mkdir(exist_ok=True)
+    for m in sorted(LD.glob('*.js')) if LD.exists() else []: shutil.copy2(m, P / 'src' / 'sets' / m.name)
     if not (P / 'script.json').exists(): (P / 'script.json').write_text(json.dumps(SKELETON, indent=1), encoding='utf-8')
     if not (P / 'post.json').exists():
         (P / 'post.json').write_text(json.dumps({"number": a.n, "title": "", "description": "", "hashtags": [], "score": 0, "score_reason": "", "covers": ""}, indent=1), encoding='utf-8')

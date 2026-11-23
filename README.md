@@ -52,7 +52,8 @@ short-uri propuse, fiecare cu notă. După ce aprobi, le face pe rând.
 ```
 D:\Vibe-nimation\
 ├── Vibe-nimation episodes\
-│   ├── _Personaje\<Serial>\                fișele personajelor (refolosite la toate episoadele)
+│   ├── _Personaje\<Serial>\                fișele personajelor + verificări (refolosite la toate episoadele)
+│   ├── _Locatii\<Serial>\                  locațiile refăcute vectorial + fișele lor (refolosite)
 │   └── <Serial> - S01E01\
 │       ├── S01E01 - Short 01 - <Titlu>.mp4
 │       └── S01E01 - Short 01 - <Titlu>.txt

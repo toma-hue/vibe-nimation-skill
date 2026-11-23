@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ro"><head><meta charset="utf-8"><title>Fișă locație</title>
+<style>html,body{margin:0;background:#1A1519}canvas{display:block;max-width:100%;height:auto}</style></head>
+<body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script type="module">
+// Location sheet: location.html?id=diner  (module src/sets/diner.js, reference stills in refs/)
+// Left: the episode still and the vector set over the SAME 16:9 window → compare layout, props, colours, light.
+// Right: three 9:16 short frames (wide, pan, close-up with depth of field) with a character for scale.
+import { W, H } from './src/core/lib.js';
+import { scene, camAt, L, finish } from './src/core/scene.js';
+import { drawCharacter } from './src/core/rig.js';
+const q = new URLSearchParams(location.search), cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const BG = '#1A1519', PANEL = '#2A2229', LABEL = '#6E1B2E', TXT = '#F3E9EC', DIM = '#B7A9B0';
+const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); };
+function label(text, x, y) { ctx.font = '700 20px Inter, Arial'; const w = ctx.measureText(text).width + 24; ctx.fillStyle = LABEL; rr(x, y, w, 32, 6); ctx.fill(); ctx.fillStyle = TXT; ctx.fillText(text, x + 12, y + 23); }
+const loadImg = (src) => new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
+
+/** draw the set's world window x∈[x0, x0+1920·k], y∈[y0, …] into a 16:9 rect, no parallax (the flat "plate") */
+function plate(mod, o, dx, dy, dw, dh, win) {
+  ctx.save(); rr(dx, dy, dw, dh, 8); ctx.clip();
+  const k = dw / win.w; ctx.translate(dx, dy); ctx.scale(k, k); ctx.translate(-win.x, -win.y);
+  for (const ly of [...mod.layers(o), ...(mod.front ? mod.front(o) : [])]) ly.draw(ctx, 0.5);
+  ctx.restore();
+}
+/** one 9:16 short frame of the set, scaled into (dx, dy, dw) */
+function frame(mod, o, cam, actor, dx, dy, dw) {
+  const off = document.createElement('canvas'); off.width = W; off.height = H; const c = off.getContext('2d');
+  c.fillStyle = '#000'; c.fillRect(0, 0, W, H);
+  scene(c, cam, [...mod.layers({ ...o, blur: cam.blur }), actor ? L(cam.af ?? 0.85, actor) : null, ...(mod.front ? mod.front(o) : [])], 0.5);
+  finish(c, 0.5, {});
+  ctx.save(); rr(dx, dy, dw, dw * 16 / 9, 8); ctx.clip(); ctx.drawImage(off, dx, dy, dw, dw * 16 / 9); ctx.restore();
+}
+
+(async () => {
+  const f = new FontFace('Inter', 'url(fonts/Inter.ttf)', { weight: '100 900' }); await f.load(); document.fonts.add(f);
+  const id = q.get('id'), mod = await import(`./src/sets/${id}.js`), m = mod.meta || {};
+  let cast = []; try { const d = await (await fetch('data/characters.json')).json(); cast = d.characters || d; } catch {}
+  const who = cast.find((c) => c.id === q.get('who')) || cast[0];
+  const o = { time: q.get('time') || (m.times || [])[0] };
+  const floor = m.floor ?? 1700, win = m.plate || { x: -420, y: floor - 1000, w: 1920 };
+  win.h = win.w * 9 / 16;
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, 1920, 1080);
+  ctx.fillStyle = TXT; ctx.font = '700 34px Inter, Arial'; ctx.fillText((m.name || id).toUpperCase(), 40, 58);
+  ctx.fillStyle = DIM; ctx.font = '18px Inter, Arial'; ctx.fillText([m.series, m.seen, o.time].filter(Boolean).join(' · '), 40, 88);
+  // left column: reference vs vector, same window
+  const ref = m.refs && m.refs.length ? await loadImg('refs/' + (q.get('ref') || m.refs[0])) : null;
+  ctx.fillStyle = PANEL; rr(30, 110, 900, 940, 14); ctx.fill();
+  if (ref) { ctx.save(); rr(50, 150, 860, 436, 8); ctx.clip(); const s = Math.max(860 / ref.width, 436 / ref.height); ctx.drawImage(ref, 50 + (860 - ref.width * s) / 2, 150 + (436 - ref.height * s) / 2, ref.width * s, ref.height * s); ctx.restore(); }
+  else { ctx.fillStyle = '#3A2E3C'; rr(50, 150, 860, 436, 8); ctx.fill(); ctx.fillStyle = DIM; ctx.fillText('(no reference still: add one to refs/ and meta.refs)', 70, 370); }
+  label('EPISOD (referință)', 50, 128);
+  plate(mod, o, 50, 600, 860, 436, win);
+  label('VECTORIAL (același cadru)', 50, 578);
+  // right: three short frames
+  const fw = 300, fy = 150, xs = [970, 1280, 1590];
+  const actor = (scale, y, x = 540, turn = 0.3, expr = 'neutral') => (c) => who && drawCharacter(c, who, x, y, scale, { t: 0.5, turn, expr, wind: 0 });
+  frame(mod, o, { ...camAt(0, [[0, { x: m.camX ?? 0, zoom: 1, cy: m.camY ?? 960 }]]) }, actor(0.62, floor), xs[0], fy, fw);
+  frame(mod, o, { ...camAt(0, [[0, { x: (m.camX ?? 0) + (m.pan ?? 320), zoom: 1.12, cy: m.camY ?? 960 }]]) }, actor(0.62, floor, 540 + (m.pan ?? 320), -0.5), xs[1], fy, fw);
+  frame(mod, o, { ...camAt(0, [[0, { x: m.camX ?? 0, zoom: 1, cy: m.camY ?? 960 }]]), blur: 6, af: 1 }, actor(2.7, 3150, 540, 0.4, 'suspicious'), xs[2], fy, fw);
+  ['LARG', 'PANORAMARE', 'PRIM-PLAN'].forEach((s, i) => label(s, xs[i], 128));
+  ctx.fillStyle = DIM; ctx.font = '17px Inter, Arial';
+  const notes = (m.notes || '').split(' '); let line = '', y = 735;
+  for (const w of notes) { if (ctx.measureText(line + w).width > 900) { ctx.fillText(line, 970, y); line = ''; y += 24; } line += w + ' '; } ctx.fillText(line, 970, y);
+  window.DONE = true;
+})().catch((e) => { document.body.insertAdjacentHTML('beforeend', `<pre style="color:#f88">${e.stack}</pre>`); window.DONE = 'error: ' + e.message; });
+</script>
+</body></html>

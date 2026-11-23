@@ -38,7 +38,8 @@ for a shot; `captions: {y: 600}` moves them (e.g. when a face is low). `finish: 
 f = parallax: 0 sky · 0.08 sun/clouds · 0.25 far · 0.5 mid · 0.85–1 actors · 1.2–1.6 foreground.
 x pans (+ right), y moves down, zoom pushes in, rot tilts (rad), cy = which world y is at the frame centre (default 960).
 
-**Sets** (each returns layers; TIME = day | sunset | dusk | night | overcast | storm) — `...sky(TIME, {horizon, sunX, moonX})`,
+**Location modules** (the episode's own places, `src/sets/<id>.js`, see LOCATIONS.md) come first: `import * as diner from './sets/diner.js'` → `...diner.layers({time, blur})`, actors at `diner.meta.floor`, `...diner.front()`.
+**Generic sets** (fallback for places too brief to model; each returns layers; TIME = day | sunset | dusk | night | overcast | storm) — `...sky(TIME, {horizon, sunX, moonX})`,
 `...city(TIME, {blur})`, `rooftop(TIME)`, `railing(TIME)` (foreground), `...street(TIME, {blur})` (suburban houses, road,
 lamps), `...room({wall, floor, window: TIME|null, door, furniture: ['bed','desk','lamp','shelf','sofa','poster','tv'], dark})`,
 `...forest(TIME, {fog, blur})`, `trunks()` (foreground tree trunks), `...hallway({wall, lockers, floor})`,

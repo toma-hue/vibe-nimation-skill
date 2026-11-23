@@ -6,7 +6,7 @@
 <script type="module">
 // Character sheet for one spec: sheet.html?id=mike  (reads data/characters.json)
 // cast mode: sheet.html?cast=1 — every character side by side
-import { drawCharacter, drawHead, EXPR, palette, walkPose } from './src/core/rig.js';
+import { drawCharacter, EXPR, palette, walkPose } from './src/core/rig.js';
 import { shade } from './src/core/lib.js';
 const q = new URLSearchParams(location.search), cv = document.getElementById('c'), ctx = cv.getContext('2d');
 const BG = '#1A1519', PANEL = '#2A2229', PANEL2 = '#352B34', LABEL = '#6E1B2E', TXT = '#F3E9EC', DIM = '#B7A9B0';
@@ -29,13 +29,13 @@ function sheet(S) {
   });
   ctx.restore();
   ['FAȚĂ', '3/4', 'SPATE', 'PROFIL'].forEach((s, i) => label(s, 145 + i * 210, 600));
-  panel(920, 40, 970, 600, 'EXPRESII');
-  const ex = ['neutral', 'happy', 'angry', 'shocked', 'sad', 'scared'], names = ['NEUTRU', 'FERICIT', 'FURIOS', 'ȘOCAT', 'TRIST', 'SPERIAT'];
-  ex.forEach((e, i) => {
+  panel(920, 40, 970, 600, 'EXPRESII ÎN TOATE PERSPECTIVELE');
+  const hk = (S.build || {}).headSize || 1, sc = 0.9 / hk;
+  [['NEUTRU · FAȚĂ', 'neutral', 0], ['FERICIT · 3/4', 'happy', 0.55], ['FURIOS · PROFIL', 'angry', 1], ['ȘOCAT · FAȚĂ', 'shocked', 0], ['TRIST · 3/4', 'sad', -0.55], ['SPERIAT · PROFIL', 'scared', -1]].forEach(([n, e, turn], i) => {
     const cx = 1080 + (i % 3) * 315, cy = 110 + Math.floor(i / 3) * 268;
     ctx.save(); ctx.fillStyle = PANEL2; rr(cx - 150, cy - 50, 300, 245, 10); ctx.fill(); ctx.clip();
-    ctx.translate(cx, cy + 75); ctx.scale(0.9, 0.9); ctx.translate(0, 830); drawHead(ctx, S, { expr: EXPR[e], t: 0, wind: 0 }); ctx.restore();
-    label(names[i], cx, cy + 160);
+    drawCharacter(ctx, S, cx, cy + 84 + sc * h * (760 + 70 * hk), sc, { expr: e, turn, t: 0.3, wind: 0, shadow: false }); ctx.restore();
+    label(n, cx, cy + 160);
   });
   panel(30, 680, 1150, 370, 'POZE (RIGGING)');
   ctx.save(); rr(40, 700, 1130, 340, 10); ctx.clip(); stage(40, 700, 1130, 340);

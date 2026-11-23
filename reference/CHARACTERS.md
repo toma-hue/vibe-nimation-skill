@@ -44,3 +44,18 @@ The rig (`engine/src/core/rig.js`) draws any character from its spec; `vn.py cas
 5. Render with `vn.py cast`, open the sheet, compare with a still, fix, re-render. Show `_Distributie.png` at the stop.
 
 Extras (a cop, a shopkeeper) can reuse a generic spec: copy one, change id, name, colours, hair.
+
+## Check (every character, every time `cast` runs)
+Open `<Name>.png`, `_verificare/<Name>_capete.png` and `_verificare/<Name>_corp.png` and go cell by cell:
+- **Hair in every view** (front, 3/4 both sides, profile both sides, back): the head is covered as in the stills — no
+  bald temples or sides, the hairline comes down the temple, sideburns in front of the ear (short styles), long hair
+  falls behind the ear, curls don't cover the eyes or glasses.
+- **Head accessories**: caps, beanies, headbands sit ON the head in every view (dome over the hair, brim forward in
+  profile and toward the face in 3/4); glasses on the eyes with the arm to the ear in profile.
+- **Expressions**: each of the 8 reads as its name in all five face views (brows, eyes, mouth agree); talking mouths open.
+- **Poses × views**: limbs attached at shoulders and hips, hands at the ends of the arms, both feet on the floor line,
+  walking/running read in profile, folded arms hidden from behind, nothing floating or cut.
+- **Identity**: side by side with a still of the character — hair shape and colour, signature clothes and colours,
+  build and height relative to the others.
+If a cell fails: spec problem → fix the spec; rig problem (would fail for anyone) → fix `engine/src/core/rig.js`, re-run
+`cast` for the whole cast and check again.

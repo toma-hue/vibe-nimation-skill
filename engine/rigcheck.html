@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ro"><head><meta charset="utf-8"><title>Verificare rig</title>
+<style>html,body{margin:0;background:#1A1519}canvas{display:block;max-width:100%;height:auto}</style></head>
+<body>
+<canvas id="c" width="2400" height="1700"></canvas>
+<script type="module">
+// QA matrices for one character — every view × every expression, every pose × every view:
+//   rigcheck.html?id=mike&page=heads     6 views × 8 expressions, big heads
+//   rigcheck.html?id=mike&page=bodies    10 poses × 5 views, full body
+// Read them cell by cell: hair covers the head in every view (no bald sides), accessories sit on the head,
+// eyes/brows/mouth read as the named expression, limbs attached, feet on the floor line.
+import { drawCharacter, EXPR, walkPose } from './src/core/rig.js';
+const q = new URLSearchParams(location.search), cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const BG = '#1A1519', CELL = '#2E2733', LABEL = '#6E1B2E', TXT = '#F3E9EC', DIM = '#B7A9B0';
+const VIEWS = [['FAȚĂ', { turn: 0 }], ['3/4 DR', { turn: 0.55 }], ['PROFIL DR', { turn: 1 }], ['3/4 ST', { turn: -0.55 }], ['PROFIL ST', { turn: -1 }], ['SPATE', { back: true }]];
+const EXP = [['neutru', 'neutral'], ['fericit', 'happy'], ['furios', 'angry'], ['vorbește', 'shout'], ['șocat', 'shocked'], ['trist', 'sad'], ['speriat', 'scared'], ['plânge', 'crying']];
+const POSES = [['stă', 'idle'], ['merge', walkPose(0.2)], ['aleargă', walkPose(0.3, true)], ['arată', 'point'], ['brațe încrucișate', 'crossed'], ['mâini pe cap', 'handsOnHead'], ['bucurie', 'cheer'], ['așezat', 'sit'], ['îngenunchiat', 'kneel'], ['salută', 'wave']];
+function txt(s, x, y, size = 22, col = TXT, align = 'center') { ctx.font = `700 ${size}px Inter, Arial`; ctx.fillStyle = col; ctx.textAlign = align; ctx.fillText(s, x, y); ctx.textAlign = 'left'; }
+
+function heads(S) {
+  const cw = 280, ch = 255, x0 = 150, y0 = 110, h = (S.build || {}).height || 1, hk = (S.build || {}).headSize || 1, sc = 0.95 / hk;
+  cv.width = x0 + cw * EXP.length + 20; cv.height = y0 + ch * VIEWS.length + 20;
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, cv.width, cv.height);
+  txt(`${S.name} — perspective × expresii`, 30, 56, 34, TXT, 'left');
+  EXP.forEach(([n], j) => txt(n.toUpperCase(), x0 + cw * j + cw / 2, y0 - 14, 20, DIM));
+  VIEWS.forEach(([vn, v], i) => {
+    txt(vn, 20, y0 + ch * i + ch / 2 + 8, 20, DIM, 'left');
+    EXP.forEach(([, e], j) => {
+      const x = x0 + cw * j, y = y0 + ch * i;
+      ctx.save(); ctx.beginPath(); ctx.roundRect(x + 4, y + 4, cw - 8, ch - 8, 10); ctx.fillStyle = CELL; ctx.fill(); ctx.clip();
+      // place the head centre in the cell: centre = feet + s·h·(−760 − 70·headK)
+      const feet = y + ch / 2 + 6 + sc * h * (760 + 70 * hk);
+      drawCharacter(ctx, S, x + cw / 2, feet, sc, { ...v, expr: v.back ? 'neutral' : e, talk: e === 'shout' ? 0.6 : 0, t: 0.3, wind: 0, shadow: false });
+      ctx.restore();
+    });
+  });
+}
+function bodies(S) {
+  const BV = VIEWS.filter(([n]) => n !== 'PROFIL ST');
+  const cw = 230, ch = 330, x0 = 150, y0 = 110, sc = 0.27 / Math.max(1, (S.build || {}).height || 1);
+  cv.width = x0 + cw * POSES.length + 20; cv.height = y0 + ch * BV.length + 20;
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, cv.width, cv.height);
+  txt(`${S.name} — poziții × perspective`, 30, 56, 34, TXT, 'left');
+  POSES.forEach(([n], j) => txt(n.toUpperCase(), x0 + cw * j + cw / 2, y0 - 14, 17, DIM));
+  BV.forEach(([vn, v], i) => {
+    txt(vn, 20, y0 + ch * i + ch / 2 + 8, 20, DIM, 'left');
+    POSES.forEach(([n, p], j) => {
+      const x = x0 + cw * j, y = y0 + ch * i;
+      ctx.save(); ctx.beginPath(); ctx.roundRect(x + 4, y + 4, cw - 8, ch - 8, 10); ctx.fillStyle = CELL; ctx.fill(); ctx.clip();
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.beginPath(); ctx.moveTo(x, y + ch - 30); ctx.lineTo(x + cw, y + ch - 30); ctx.stroke();   // floor line
+      drawCharacter(ctx, S, x + cw / 2, y + ch - 30, sc, { ...v, pose: p, expr: n === 'mâini pe cap' ? 'shocked' : n === 'bucurie' ? 'laugh' : 'neutral', t: 0.3, wind: 0 });
+      ctx.restore();
+    });
+  });
+}
+(async () => {
+  const f = new FontFace('Inter', 'url(fonts/Inter.ttf)', { weight: '100 900' }); await f.load(); document.fonts.add(f);
+  const d = await (await fetch(q.get('file') || 'data/characters.json')).json(), list = d.characters || d;
+  const S = list.find((c) => c.id === q.get('id')) || list[0];
+  (q.get('page') === 'bodies' ? bodies : heads)(S);
+  window.DONE = true;
+})().catch((e) => { document.body.insertAdjacentHTML('beforeend', `<pre style="color:#f88">${e.stack}</pre>`); window.DONE = 'error: ' + e.message; });
+</script>
+</body></html>

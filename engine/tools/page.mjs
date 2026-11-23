@@ -29,7 +29,7 @@ await new Promise((r) => srv.listen(0, '127.0.0.1', r));
 const port = srv.address().port, prof = fs.mkdtempSync(path.join(os.tmpdir(), 'vn-page-'));
 const chrome = spawn(CHROME, ['--headless=new', '--no-sandbox', '--disable-background-networking', '--disable-component-update', '--remote-debugging-port=0', `--user-data-dir=${prof}`, '--no-first-run', '--hide-scrollbars', '--window-size=1920,1200', 'about:blank'], { stdio: 'ignore' });
 let dbg; for (let i = 0; i < 150 && !dbg; i++) { try { dbg = fs.readFileSync(path.join(prof, 'DevToolsActivePort'), 'utf8').split('\n')[0].trim(); } catch { await sleep(100); } }
-let target; for (let i = 0; i < 100 && !target; i++) { try { target = await (await fetch(`http://127.0.0.1:${dbg}/json/new?http://127.0.0.1:${port}/${url}`, { method: 'PUT' })).json(); } catch { await sleep(150); } }
+let target; for (let i = 0; i < 100 && !target; i++) { try { target = await (await fetch(`http://127.0.0.1:${dbg}/json/new?${encodeURIComponent(`http://127.0.0.1:${port}/${url}`)}`, { method: 'PUT' })).json(); } catch { await sleep(150); } }
 const ws = new WebSocket(target.webSocketDebuggerUrl); await new Promise((r) => (ws.onopen = r));
 let id = 0; const pend = new Map(); const logs = [];
 ws.onmessage = (e) => { const m = JSON.parse(e.data); if (m.id && pend.has(m.id)) { pend.get(m.id)(m); pend.delete(m.id); } else if (m.method === 'Runtime.exceptionThrown') logs.push(m.params.exceptionDetails.exception?.description || m.params.exceptionDetails.text); };

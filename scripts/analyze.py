@@ -3,6 +3,7 @@
   python scripts/vn.py analyze <episode.mp4|mkv>              full analysis (≈5–15 min for 40 min on a CPU)
   python scripts/vn.py analyze <episode> --frames 612.5,1430  full-resolution stills (character looks, details)
   python scripts/vn.py analyze <episode> --clip 600 660       one sheet for a time range, 1 frame/second
+  python scripts/vn.py analyze <episode> --palette 612.5,1430 the 8 main colours of each still (hex), for location/character specs
 
 Writes <output_root>/_lucru/<episode-id>/analysis/:
   overview.md        READ FIRST: file hints (series, SxxExx), duration, every scene with its time, length,
@@ -114,6 +115,17 @@ def energy(wav):
     return (20 * np.log10(rms)).round(1).tolist()
 
 
+def palette(img_path, k=8, iters=12):
+    """dominant colours of a still (tiny k-means), biggest share first: [(hex, share)]"""
+    a = np.asarray(Image.open(img_path).convert('RGB').resize((160, 90)), dtype=np.float32).reshape(-1, 3)
+    rng = np.random.default_rng(0); cen = a[rng.choice(len(a), k, replace=False)]
+    for _ in range(iters):
+        lab = ((a[:, None, :] - cen[None]) ** 2).sum(-1).argmin(1)
+        cen = np.array([a[lab == j].mean(0) if (lab == j).any() else cen[j] for j in range(k)])
+    share = np.bincount(lab, minlength=k) / len(a); order = share.argsort()[::-1]
+    return [('#%02X%02X%02X' % tuple(int(v) for v in cen[j]), float(share[j])) for j in order]
+
+
 def sheet(frames, out, cols=5, rows=4):
     """frames: [(thumb_path, label)] → grid image with labels under each frame."""
     lab = 26; W, H = cols * TW, rows * (TH + lab)
@@ -130,6 +142,7 @@ def main():
     ap.add_argument('episode')
     ap.add_argument('--frames', help='comma list of seconds → full-res stills')
     ap.add_argument('--clip', nargs=2, type=float, metavar=('FROM', 'TO'), help='1 frame/second sheet for a range')
+    ap.add_argument('--palette', help='comma list of seconds → the main colours of each frame')
     ap.add_argument('--id', help='work folder name (default: from the file name)')
     a = ap.parse_args()
     cfg = load_config()
@@ -137,6 +150,13 @@ def main():
     if not ep.exists(): sys.exit(f'not found: {ep}')
     W = work_root(cfg) / (a.id or slug(ep.stem)[:60]); A = W / 'analysis'; A.mkdir(parents=True, exist_ok=True)
 
+    if a.palette:
+        out = A / 'frames'; out.mkdir(exist_ok=True)
+        for t in [float(x) for x in a.palette.split(',')]:
+            f = out / f'frame_{t:08.2f}.jpg'
+            if not f.exists(): run([ffmpeg(), '-y', '-loglevel', 'error', '-ss', str(t), '-i', str(ep), '-frames:v', '1', '-q:v', '2', str(f)])
+            print(f'{hms(t)}  {f.name}:  ' + '  '.join(f'{h} {p:.0%}' for h, p in palette(f)))
+        return
     if a.frames:
         out = A / 'frames'; out.mkdir(exist_ok=True)
         for t in [float(x) for x in a.frames.split(',')]:
