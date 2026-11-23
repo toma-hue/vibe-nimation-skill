@@ -121,7 +121,8 @@ when faces changed, `_verificare/_Fete.png`. **Before the stop, once, open every
 - **Expressions**: each of the 8 reads as its name in all five face views; talking mouths open.
 - **Poses × views**: limbs attached, hands at the ends of the arms, both feet on the floor line, walks/runs read in
   profile, folded arms hidden from behind, nothing floating or cut. **From behind** (SPATE, 3/4 SPATE): the back of
-  the head is hair (no face showing through), the neck and the near ear/cheek show in 3/4, the arm that points or waves
+  the head is a real head — the skull in skin under the hair, the jaw corners and the nape going into the neck below
+  the hair (never hair and accessories floating over the neck), no face showing through, the neck and the near ear/cheek show in 3/4, the arm that points or waves
   goes the right way, the near leg is drawn over the far one.
 - **Distinct people**: no two main characters have the same hair silhouette (line-up) or the same face read
   (`_Fete.png`: hair flattened to a silhouette — every face must still be told apart; kids and adult women especially).

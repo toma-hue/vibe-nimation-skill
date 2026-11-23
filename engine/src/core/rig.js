@@ -101,13 +101,33 @@ function palette(S) {
 }
 
 // ---------- head: front and back ----------
+/** the head itself seen from behind (skull, the backs of the cheeks, the jaw corners, the nape into the neck), as points;
+ *  the hair is drawn over it. m maps x (3/4 from behind squeezes the far side). */
+function backSkullPts(g, m = (x) => x) {
+  const pts = [];
+  for (let i = 0; i <= 16; i++) { const a = Math.PI * (1 + i / 16); pts.push([Math.cos(a) * (g.W + 2), -858 + Math.sin(a) * 68]); }
+  const side = [[g.W + 1, -840], [g.cheekW - 1, -806], [g.jawW, g.jawY], [g.jawW * 0.62, g.jawY + 12], [26, g.jawY + 20]];
+  pts.push(...side, ...side.reverse().map(([x, y]) => [-x, y]));
+  return pts.map(([x, y]) => [m(x), y]);
+}
+function drawBackSkull(ctx, g, c, m = (x) => x) {
+  const pts = backSkullPts(g, m), path = () => smooth(ctx, pts, true, 0.4);
+  path(); ink(ctx, c.skin);
+  shadeIn(ctx, path, () => {                                   // the nape in shadow under the skull, a soft side shade
+    ctx.fillStyle = c.skinSh; ctx.beginPath(); ctx.ellipse(m(0), g.jawY + 22, 70, 34, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 0.5; ctx.fillRect(m(g.W * 0.45), -960, 200, 260); ctx.globalAlpha = 1;
+  });
+}
+
 export function drawHead(ctx, S, o = {}) {
   const c = o._c || palette(S), e = typeof o.expr === 'string' ? EXPR[o.expr] : o.expr || EXPR.neutral;
   const t = o.t || 0, turn = clamp(o.turn || 0, -0.8, 0.8), wind = o.wind ?? 1, fx = turn * 24;
   const F = faceParams(S), g = faceGeom(F), HP = hairParams(S), face = S.face || {}, fem = F.fem, flat = !!S._flatHair;
   if (o.back) {
+    // ears, then the head itself (skin), then the hair over it
     for (const s of [-1, 1]) { ctx.beginPath(); ctx.ellipse(s * (g.W + 2 + F.ears.out * 7), -812, 11 * F.ears.size, 17 * F.ears.size, 0, 0, Math.PI * 2); ink(ctx, c.skin, 4); }
-    if (!HP) { ctx.beginPath(); ctx.ellipse(0, -842, g.W + 20, 90, 0, 0, Math.PI * 2); ink(ctx, c.skin); }
+    drawBackSkull(ctx, g, c);
+    if (face.beard === 'full') for (const s of [-1, 1]) { smooth(ctx, [[s * g.jawW, g.jawY - 34], [s * (g.jawW + 2), g.jawY], [s * g.jawW * 0.6, g.jawY + 12], [s * g.jawW * 0.7, g.jawY - 30]], true, 0.4); ctx.fillStyle = c.hair; ctx.fill(); }
     hairBackView(ctx, HP, c, { t, wind, flat });
     accessoriesHead(ctx, S, c, 0, true);
     return;
@@ -410,10 +430,8 @@ function drawHeadBack3q(ctx, S, o) {
   const c = o._c || palette(S), t = o.t || 0, wind = o.wind ?? 1, k = clamp((Math.abs(o.turn) - 0.3) / 0.45);
   const F = faceParams(S), g = faceGeom(F), HP = hairParams(S), face = S.face || {};
   const cx = -(14 + 14 * k), m = map3q(cx, k, g.W);           // the head's centre line moves AWAY from the near side
-  // the near cheek and the jaw corner peek out past the back of the head (they stop at the jaw: no chin from behind)
-  const ch = [[-g.W * 0.9, -860], [-g.cheekW - 2, -818], [-g.cheekW + 2, -792], [-g.jawW - 2, g.jawY - 8], [-g.jawW * 0.6, g.jawY + 6]].map(([x, y]) => [m(x), y]).concat([[-6, g.jawY - 4], [-6, -830]]);   // joined to the neck (x 0)
-  smooth(ctx, ch, true, 0.4); ink(ctx, c.skin);
-  shadeIn(ctx, () => smooth(ctx, ch, true, 0.4), () => { ctx.fillStyle = c.skinSh; ctx.fillRect(m(-g.W * 0.6), -900, 200, 260); });
+  // the head itself (skin) — skull, the near cheek and jaw corner reach past the hair on the near side
+  drawBackSkull(ctx, g, c, m);
   if (face.beard === 'full') { smooth(ctx, [[m(-g.jawW) + 4, g.jawY - 30], [m(-g.jawW) - 2, g.jawY], [m(-g.jawW * 0.5), g.chinY + 10], [m(-g.W * 0.35), -770]], true, 0.4); ctx.fillStyle = c.hair; ctx.fill(); }
   // near ear
   const earX = m(-g.W) + 8 - F.ears.out * 6;
