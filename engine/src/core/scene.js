@@ -46,8 +46,8 @@ export function finish(ctx, t, o = {}) {
   if (o.tint) { ctx.globalCompositeOperation = 'soft-light'; ctx.fillStyle = o.tint; ctx.fillRect(0, 0, W, H); ctx.globalCompositeOperation = 'source-over'; }
   const v = ctx.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.78);
   v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, `rgba(10,0,20,${o.vignette ?? 0.5})`); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
-  // grain re-rolls at 12 fps: film look, and it compresses far better than per-frame noise
-  const f = Math.floor(t * 12); ctx.globalAlpha = o.grain ?? 0.04; ctx.drawImage(grainTex(), -(f * 37 % 200), -(f * 53 % 200)); ctx.restore();
+  // optional film grain (finish: {grain: 0.03}); off by default: the clean vector look compresses far better
+  const f = Math.floor(t * 12), g = o.grain ?? 0; if (g > 0) { ctx.globalAlpha = g; ctx.drawImage(grainTex(), -(f * 37 % 200), -(f * 53 % 200)); } ctx.restore();
 }
 /** white/colour flash that fades over d seconds */
 export function flash(ctx, lt, t0 = 0, d = 0.15, color = '255,235,210', a = 0.6) {

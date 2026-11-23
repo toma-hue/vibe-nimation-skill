@@ -8,7 +8,7 @@ between episodes.
   at character scale. Flat fills + **cel shading**: one shadow tone (`shade(c, -0.3)`, cool purple-black) on the side away
   from the light, one highlight where it helps. No gradients on characters, no textures, no photoreal anything.
 - **Cinematic lighting**: a warm rim (`#FF9E5E`) on the light side of faces and bodies, cool shadows; skies carry the mood
-  (sunset purple→orange, night navy, storm grey). Finish every frame with the vignette + light grain (`finish`, automatic).
+  (sunset purple→orange, night navy, storm grey). Finish every frame with the vignette (`finish`, automatic); film grain only on purpose (`finish: {grain: 0.03}`).
 - **Stylized & expressive** characters: big readable eyes, thick brows that act, clear mouth shapes. Expressions change
   on the beat, never randomly.
 - **Palette** (the sheet): maroon `#6E1B2E`, cream `#E8DCCB`, ink black `#252027`, slate grey `#5A5560`, navy `#3B4A6B`,
