@@ -6,7 +6,10 @@
 The cast file is Vibe-nimation episodes/_Personaje/<Series>/characters.json (reference/CHARACTERS.md). It is
 shared by every episode of the series: add new characters to it, never start a second one.
 Writes next to it: <Name>.png (sheet), _Distributie.png (everyone side by side) and, for the mandatory review,
-_verificare/<Name>_capete.png (6 views × 8 expressions) + _verificare/<Name>_corp.png (10 poses × 5 views).
+_verificare/<Name>_capete.png (6 views × 8 expressions) + _verificare/<Name>_corp.png (10 poses × 5 views) per rendered
+character, _verificare/_Fete.png (face lineup: everyone front + 3/4, hair as a flat silhouette) and
+_verificare/_review.png (review pack: the line-up + one row of heads per character rendered this time — the one image
+to open per iteration; the full matrices are still made every time and get their full check once before the stop).
 """
 import argparse, json, shutil, subprocess, sys
 from pathlib import Path
@@ -35,8 +38,12 @@ def main():
             o2 = V / f'{safe_name(c["name"])}_{suffix}.png'
             r = subprocess.run([node, 'tools/page.mjs', f'rigcheck.html?id={c["id"]}&page={page}', str(o2)], cwd=R, env=env, capture_output=True, text=True)
             print(o2 if r.returncode == 0 else f'FAILED {c["id"]} {page}: {r.stderr[-400:]}')
-    r = subprocess.run([node, 'tools/page.mjs', 'sheet.html?cast=1', str(C / '_Distributie.png')], cwd=R, env=env, capture_output=True, text=True)
-    print(C / '_Distributie.png' if r.returncode == 0 else f'FAILED cast: {r.stderr[-400:]}')
+    V = C / '_verificare'; V.mkdir(exist_ok=True)
+    for url, out in (('sheet.html?cast=1', C / '_Distributie.png'), ('rigcheck.html?page=faces', V / '_Fete.png'),
+                     (f'rigcheck.html?page=review&ids={",".join(sorted(ids))}', V / '_review.png')):
+        r = subprocess.run([node, 'tools/page.mjs', url, str(out)], cwd=R, env=env, capture_output=True, text=True)
+        print(out if r.returncode == 0 else f'FAILED {url}: {r.stderr[-400:]}')
+    print(f'review this iteration: {V / "_review.png"}  (+ {V / "_Fete.png"} when faces changed)')
     meta['cast_file'] = str(cf); save_episode_meta(W, meta)
 
 

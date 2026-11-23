@@ -1,10 +1,13 @@
 # Episode analysis and planning
 
 ## Watching the episode
-You "watch" through three sources together: the contact sheets (what is seen), the transcript (what is said), the
-loudness ★ (where the action, music and shouting are). Read them scene by scene, in order. When a scene matters and the
-sheet is not enough, pull a 1 fps clip sheet or full stills. Note for each scene: place, time of day, who is there,
-what happens, what changes (the beat), and any line worth quoting.
+You "watch" through three sources together: the **packs** (`analysis/packs/`, 80 frames per image: what is seen), the
+transcript (what is said), the loudness ★ (where the action, music and shouting are). Credit and logo scenes are
+detected automatically (black frames with text), marked `[credits / logo]` in overview.md and left out of the packs.
+Go pack by pack, in order. Note for each scene: place, time of day, who is there, what happens, what changes (the
+beat), and any line worth quoting — fill **place** and **who** in `analysis/scene_index.md` as you go, so every later
+step (planning, locations, scripts) reads that text instead of reopening images. When a scene matters and the pack is
+not enough, pull a 1 fps clip sheet (`--clip`) or full stills (`--frames`) for that scene only.
 
 ## analysis.md (internal)
 1. **Identity** — series, season, episode, title, and how you know (file name, title card, dialogue, knowledge).

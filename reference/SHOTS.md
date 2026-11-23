@@ -22,7 +22,7 @@ The engine copy in every short is self-contained: `index.html` (player), `src/ma
 ## shots.js — the API
 ```js
 import { key, ease, clamp, inv, lerp } from './core/lib.js';
-import { scene, camAt, shakeAt, L, flash, speedLines, bars, pulse, fade } from './core/scene.js';
+import { scene, camAt, shakeAt, L, flash, speedLines, bars, pulse, fade, wide, medium, closeUp, extremeCloseUp, twoShot, focus, mark } from './core/scene.js';
 import { sky, city, rooftop, railing, street, room, forest, trunks, hallway, voidBg, rain, snow, fog, motes, lightning } from './core/sets.js';
 import { drawCharacter, exprAt, walkPose, mixPose, POSES, EXPR } from './core/rig.js';
 export function buildShots(T) { const S = []; … S.cues = cues; S.music = { mood, bpm }; return S; }
@@ -55,9 +55,27 @@ walk/run with ±0.8), `back` (seen from behind), `look: [x, y]`, `headTilt`, `le
 Expressions: neutral happy laugh smirk angry shout determined shocked scared sad crying tired suspicious thinking disgust embarrassed.
 Poses: idle pockets point pointUp wave cheer handsOnHead fistUp crossed shrug reach defend facepalm hug sit kneel crouch.
 Views: `turn` 0 front · ±0.4–0.6 three-quarter · ±0.75…1 **true profile** (own head drawing: nose, chin, side eye; body side-on; facing left is the mirror) · `back: true`. `sit`, `kneel`, `crouch`, walks and runs read best in profile (turn ±1).
-Scale guide: wide 0.5–0.7 (feet ~1700) · medium 1.5 (feet ~2500) · close-up 2.75 (feet ~3150) · extreme 3.6 (feet ~3900).
+**Shot helpers (use them — framing bugs were most of the re-renders)** — each returns `{x, y, s}` for
+`drawCharacter(c, S, f.x, f.y, f.s, opts)`, computed from the character's build so a kid and an adult get the same
+face size and the face lands where the captions don't: `wide(S, {x, floor})` (full body, one scale for everyone so
+heights stay true) · `medium(S, {x, faceY})` (waist up) · `closeUp(S, {x, faceY})` (head + shoulders, face ≈ 440 px) ·
+`extremeCloseUp(S, {x, faceY})` · `twoShot(A, B, {xA, xB})` → `[fA, fB]` at their true relative heights.
+`const f = closeUp(T.CH.will); drawCharacter(c, T.CH.will, f.x, f.y, f.s, { t, expr: 'scared' })`.
+**Aiming the camera at something on another layer** — a point drawn on a layer with parallax f ≠ 1 moves differently
+from the actors; `focus(worldX, worldY, f, {zoom, sx, sy})` returns the camera that puts it at the screen point
+(default the centre): `camAt(lt, [[0, focus(820, 1180, 0.6)], [sh.dur, focus(820, 1180, 0.6, { zoom: 1.25 })]])`.
+**Framing check** — `build --preview` / `node tools/capture.mjs check` renders sample frames of every shot and prints,
+per shot, any character off-frame, any face cut by the edge or under the caption band, and any marked prop off-frame
+or under the captions. Props from props.js mark themselves; mark your own important objects with
+`mark(c, 'name', x0, y0, x1, y1)` where you draw them. A deliberate exit / partial figure: `allowOff: ['Mike Wheeler']`
+on the shot. Faces too low for the captions: raise `faceY`, or move the captions for that shot (`captions: {y: 560}`).
+Manual scale guide (if you must): wide 0.5–0.7 (feet ~1700) · medium 1.5 (feet ~2500) · close-up 2.75 (feet ~3150) · extreme 3.6 (feet ~3900) — for an adult; divide by height × headSize for kids.
 Moving a character: `x = lerp(x0, x1, ease.inOut(clamp(lt / d)))`; entering/exiting frame = start/end off-screen.
 
+**Props** — `import { bike, wallPhone, walkie, flashlight, creature } from './props.js'` (the series' own props.js
+replaces the default): `wallPhone(c, x, y, s, { ringing, t, off })`, `bike(c, x, y, s, { color, flip })`,
+`walkie(c, x, y, s, { led, angle })`, `flashlight(c, x, y, s, { on, angle, beam })`, `creature(c, x, y, s, { open, t })`.
+Add series props to `_Locatii/<Series>/props.js` in the same style (flat fills, ink, `mark()` at the end).
 **FX** (after `scene`) — `flash(c, lt, t0, d)`, `speedLines(c, t, k, cx, cy)`, `pulse(c, t, k, color)`, `bars(c, k)`, `fade(c, k)`.
 
 **Sound** — `q(t, type, {gain, end, pan})`: whoosh (cuts, fast moves), boom (big reveal), hit (impact), riser (`end`),

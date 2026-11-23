@@ -29,10 +29,13 @@ Output root (from the config):
 ## 1 · Analyse the episode
 `python SKILL/scripts/vn.py analyze "<episode file>"` (≈5–15 min for 40 min on a CPU). It prints the work folder.
 Then, in this order, and do not skip any of it:
-1. Read `analysis/overview.md` (every scene: time, length, loudness ★, its dialogue, its sheet) and `transcript.txt`.
-2. **Open every contact sheet** in `analysis/sheets/` (20 frames each, time + scene number under each frame). This is
-   how you "watch" the episode: who is on screen, where, what happens, how it looks. For a moment you need in detail:
-   `vn.py analyze "<file>" --clip 612 640` (1 frame/second) or `--frames 612.5,618` (full-resolution stills).
+1. Read `analysis/overview.md` (every scene: time, length, loudness ★, its dialogue, its pack/sheet; credit and logo
+   scenes are already detected and marked, not in the packs) and `transcript.txt`.
+2. **Open every pack** in `analysis/packs/` (4 contact sheets = 80 frames per image, time + scene number under each
+   frame). This is how you "watch" the episode: who is on screen, where, what happens, how it looks. While you watch,
+   fill the **place** and **who** columns of `analysis/scene_index.md` — from here on read that text instead of
+   reopening images. Only for a moment you need in detail: `vn.py analyze "<file>" --clip 612 640` (1 frame/second) or
+   `--frames 612.5,618` (full-resolution stills); a single sheet from `analysis/sheets/` to look closer at one part.
 3. Identify the **series, season, episode, episode title** (file name hints, on-screen titles, dialogue, your own
    knowledge of the show — say how sure you are) and the **characters**: names from the dialogue (people addressing each
    other), matched to faces by when they speak and who is on screen; their look from the stills (hair style and colour,
@@ -56,21 +59,29 @@ viral score 1–10 with the reason.
 Cast file: `<root>/Vibe-nimation episodes/_Personaje/<Series>/characters.json` — format and every option in
 `reference/CHARACTERS.md`. If it exists (an earlier episode), reuse it and only add new characters or a changed look
 (new outfit → a second spec, e.g. `mike_winter`). Main and recurring characters get specs; one-scene extras can reuse a
-generic spec with different colours. Then `python SKILL/scripts/vn.py cast "<work>"` → per character: the sheet
-(`<Name>.png`: turnaround front / 3/4 / back / profile, expressions in every view, poses, palette), the two QA matrices
-(`_verificare/<Name>_capete.png` = 6 views × 8 expressions, `_verificare/<Name>_corp.png` = 10 poses × 5 views), and
-`_Distributie.png`.
-**Mandatory review — open every sheet and both matrices of every character, cell by cell** (checklist in
-`reference/CHARACTERS.md` → "Check"): recognisable vs the stills; in EVERY view the hair covers the head (no bald
+generic spec with different colours. Every character gets **custom hair parameters and a face read + face parameters from close stills of that person**
+(`reference/CHARACTERS.md` → Hair, Face) — never a shared preset, never one spec reused for two people.
+Then `python SKILL/scripts/vn.py cast "<work>"` → per character: the sheet (`<Name>.png`: turnaround front / 3/4 /
+back / profile, expressions in every view, poses, palette), the two QA matrices (`_verificare/<Name>_capete.png` =
+6 views × 8 expressions, `_verificare/<Name>_corp.png` = 10 poses × 5 views), `_Distributie.png`, the face lineup
+`_verificare/_Fete.png` (every head front + 3/4 with the hair as a flat silhouette) and the review pack
+`_verificare/_review.png` (the line-up + one row of heads per character rendered this time).
+**Iterate cheaply:** after a fix re-render only what changed (`vn.py cast "<work>" --ids mike,will`) and open the one
+image `_verificare/_review.png` (+ `_Fete.png` when a face changed).
+**Mandatory review, once before the stop — open every sheet, both matrices of every character and `_Fete.png`, cell
+by cell** (checklist in `reference/CHARACTERS.md` → "Check"; no two main characters with the same hair silhouette or
+face read; no outline inside the hair): recognisable vs the stills; in EVERY view the hair covers the head (no bald
 sides or temples, sideburns/hairline right), caps/hats/glasses sit on the head; every expression reads as its name in
 every view; every pose has attached limbs and both feet on the floor line. A problem in one character's spec → fix
-the spec; a problem every character would share → fix the rig (`SKILL/engine/src/core/rig.js`) and re-run `cast`
-for everyone. Never show the user a sheet you have not checked.
+the spec; a problem every character would share → fix the rig (`SKILL/engine/src/core/rig.js`, `hair.js`, `face.js`)
+and re-run `cast` for everyone. Never show the user a sheet you have not checked.
 
 ## 3b · Locations (vector sets, reused across episodes)
 Follow `reference/LOCATIONS.md`: for every place the shorts use, pull stills (`--frames`) and colours (`--palette`),
 copy the stills to `_Locatii/<Series>/refs/`, write the module (`vn.py locations "<work>" --new <id>`, then rewrite it),
-and render `vn.py locations "<work>"`. **Open every location sheet** and compare the vector plate with the still side
+and render `vn.py locations "<work>"` (after a fix: `--ids <id>`, only that sheet). Objects the series keeps using (a
+bike, a phone, a walkie, a creature) go in the shared `_Locatii/<Series>/props.js` (`vn.py locations "<work>" --props`
+starts it from the engine's default props); every short gets a copy. **Open every location sheet** and compare the vector plate with the still side
 by side (layout, big shapes, colours, light, signature details, scale, no black in the 9:16 frames); fix until it is
 recognisably the same place. Reuse existing modules from earlier episodes.
 
@@ -97,16 +108,26 @@ change it. **Do not voice or animate anything until they say yes.** Apply their 
 4. **Shots** — rewrite `src/shots.js` (the copied file is a complete working example: study it). One shot per beat
    (~2–5 s), cut on the narration (`T.L(i) - 0.15`), camera always moving, mix wide / medium / close-up / extreme
    close-up / over-the-shoulder, expression changes and FX land on words (`T.w('word', T.L(i))`), mimed lines use
-   `talk: T.talk(id, t)`. Every scene uses its **location module** from `src/sets/` (step 3b), not a generic set.
-   Sets, poses, expressions, views, FX, sound cues and music mood: `reference/SHOTS.md`.
-5. `python SKILL/scripts/vn.py build "<short>" --preview` → music (if missing), mix, error check, `review/all.jpg`.
-   **Open `review/all.jpg`** and check every shot against `reference/STYLE.md` → "Check". For details:
-   `node tools/capture.mjs frames review/f "12.3,40.1"` inside the short folder. Fix and re-run until right.
+   `talk: T.talk(id, t)`. Every scene uses its **location module** from `src/sets/` (step 3b), not a generic set, and
+   the series' props from `src/props.js`. **Frame with the shot helpers** (`wide`, `medium`, `closeUp`,
+   `extremeCloseUp`, `twoShot` — kids and adults frame the same) and aim at anything on another parallax layer with
+   `focus(x, y, f)`; deliberate exits go in the shot's `allowOff`. Sets, poses, expressions, views, FX, sound cues and
+   music mood: `reference/SHOTS.md`.
+5. `python SKILL/scripts/vn.py build "<short>" --preview` → music (if missing), mix, error + **framing check** (text:
+   any character, face or marked prop off the 9:16 frame or under the captions, per shot), `review/all.jpg`.
+   Fix every framing warning first (it costs no image). Then **open `review/all.jpg` once** and check every shot
+   against `reference/STYLE.md` → "Check". For fixes, don't rebuild and reopen the whole sheet: re-capture only the
+   2–3 changed moments, `node tools/capture.mjs frames review/f "12.3,40.1"` (or `sheet review/fix.jpg "12.3,40.1"`)
+   inside the short folder, and run `node tools/capture.mjs check S04,S05` for the changed shots.
 6. `python SKILL/scripts/vn.py build "<short>"` → `renders/short_share.mp4` (~1.5–3 min per minute of video with 4 workers).
    Look at 3–4 frames of the final file (ffmpeg `-ss`), especially the hook and the climax.
 7. Fill `post.json` (`reference/POSTING.md`: title, description, hashtags, score, reason, covers), then
    `python SKILL/scripts/vn.py deliver "<short>"` → the .mp4 and .txt land in the episode folder.
 After each short, tell the user in one line what was delivered. Continue with the next without asking.
+
+**Work in parallel:** voicing (`voice`) and rendering (`build`) run for minutes — start them in the background and
+meanwhile write the next short's `script.json` and `shots.js` (its `new_short` folder can exist already). Never run two
+builds of the same short at once; on a 16 GB machine run one voice and one render at a time.
 
 ## 7 · Finish
 Summarise in Romanian: the folder, every short with its title, length and score, anything you could not do well and why.

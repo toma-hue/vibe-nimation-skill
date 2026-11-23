@@ -3,6 +3,7 @@
   python scripts/vn.py locations <work-dir>              every location module → sheets
   python scripts/vn.py locations <work-dir> --ids diner  only these
   python scripts/vn.py locations <work-dir> --new diner  start a module from reference/location-example.js
+  python scripts/vn.py locations <work-dir> --props      start the series' props.js from the engine's default props
 
 Folder: Vibe-nimation episodes/_Locatii/<Series>/
   <id>.js            the location module (reference/LOCATIONS.md) — reused by every episode of the series
@@ -21,17 +22,21 @@ def loc_dir(meta, cfg=None):
 
 
 def main():
-    ap = argparse.ArgumentParser(); ap.add_argument('work'); ap.add_argument('--ids'); ap.add_argument('--new')
+    ap = argparse.ArgumentParser(); ap.add_argument('work'); ap.add_argument('--ids'); ap.add_argument('--new'); ap.add_argument('--props', action='store_true')
     a = ap.parse_args(); cfg = load_config(); W = Path(a.work); meta = episode_meta(W)
     if not meta.get('series'): sys.exit('episode.json has no "series" yet: write series/season/episode into it first')
     D = loc_dir(meta, cfg); (D / 'refs').mkdir(parents=True, exist_ok=True)
+    if a.props:
+        f = D / 'props.js'
+        if f.exists(): sys.exit(f'{f} exists')
+        shutil.copy2(SKILL / 'engine' / 'src' / 'props.js', f); return print(f, '← add the series\' own props (reference/SHOTS.md → Props)')
     if a.new:
         f = D / f'{a.new}.js'
         if f.exists(): sys.exit(f'{f} exists')
         src = (SKILL / 'reference' / 'location-example.js').read_text(encoding='utf-8')
         f.write_text(src.replace("id: 'diner'", f"id: '{a.new}'").replace("series: 'Example'", f"series: {json.dumps(meta['series'])}"), encoding='utf-8')
         return print(f, '← rewrite it for this place (reference/LOCATIONS.md)')
-    mods = sorted(D.glob('*.js'))
+    mods = sorted(m for m in D.glob('*.js') if m.name != 'props.js')
     if not mods: sys.exit(f'no location modules in {D} yet: vn.py locations <work> --new <id>')
     R = copy_engine(W / 'locations_render'); (R / 'src' / 'sets').mkdir(exist_ok=True)
     for m in mods: shutil.copy2(m, R / 'src' / 'sets' / m.name)

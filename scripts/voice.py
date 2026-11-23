@@ -67,10 +67,62 @@ def heard_words(wav, sr):
     return [(w.word.strip(), float(w.start), float(w.end)) for s in segs for w in (s.words or [])]
 
 
+# ---- comparing what was said with the script: numbers, symbols and sound-alike names are not mismatches ----
+ONES = 'zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen'.split()
+TENS = 'zero ten twenty thirty forty fifty sixty seventy eighty ninety'.split()
+ORD = {'1st': 'first', '2nd': 'second', '3rd': 'third', '4th': 'fourth', '5th': 'fifth', '6th': 'sixth', '7th': 'seventh', '8th': 'eighth', '9th': 'ninth', '10th': 'tenth'}
+
+
+def _words(n):
+    if n < 20: return [ONES[n]]
+    if n < 100: return [TENS[n // 10]] + ([ONES[n % 10]] if n % 10 else [])
+    if n < 1000: return [ONES[n // 100], 'hundred'] + (_words(n % 100) if n % 100 else [])
+    if n < 1000000: return _words(n // 1000) + ['thousand'] + (_words(n % 1000) if n % 1000 else [])
+    return list(str(n))
+
+
+def spoken(tok):
+    """one script/transcript token → the words a narrator says for it"""
+    if tok in ORD: return [ORD[tok]]
+    if re.fullmatch(r'0\d+', tok): return [ONES[int(d)] for d in tok]              # 011 → zero one one
+    if re.fullmatch(r'\d+', tok):
+        n = int(tok)
+        if len(tok) == 4 and (1100 <= n <= 1999 or 2010 <= n <= 2099):              # years: 1983 → nineteen eighty three
+            hi, lo = divmod(n, 100)
+            return _words(hi) + (['hundred'] if lo == 0 else (['oh'] + _words(lo) if lo < 10 else _words(lo)))
+        return _words(n)
+    return [tok]
+
+
+def canon(text):
+    """normalised word list: lower case, & → and, % → percent, hyphens split, digits spelled out, punctuation gone"""
+    t = text.lower().replace('’', "'").replace('&', ' and ').replace('%', ' percent ').replace('+', ' plus ').replace('-', ' ').replace('/', ' ')
+    out = []
+    for raw in t.split():
+        w = re.sub(r"[^a-z0-9']+", '', raw).strip("'")
+        if not w: continue
+        out += [x for x in spoken(w) if x != 'and' or not re.fullmatch(r'\d+', w)]
+    return out
+
+
+def sound(w):
+    """a sound-alike key (Soundex): Byers / Buyers, Sinclair / Sinclaire count as the same word"""
+    w = re.sub(r'[^a-z]', '', w)
+    if not w: return w
+    codes = {**dict.fromkeys('bfpv', '1'), **dict.fromkeys('cgjkqsxz', '2'), **dict.fromkeys('dt', '3'), 'l': '4', **dict.fromkeys('mn', '5'), 'r': '6'}
+    key, last = w[0], codes.get(w[0], '')
+    for ch in w[1:]:
+        c = codes.get(ch, '')
+        if c and c != last: key += c
+        if ch not in 'hw': last = c
+    return (key + '000')[:4]
+
+
 def score(text, heard):
-    a = [norm(w) for w in text.split() if norm(w)]
-    b = [norm(w) for w, _, _ in heard if norm(w)]
-    return SequenceMatcher(None, a, b).ratio()
+    a = canon(text); b = canon(' '.join(w for w, _, _ in heard))
+    exact = SequenceMatcher(None, a, b, autojunk=False).ratio()
+    alike = SequenceMatcher(None, [sound(x) for x in a], [sound(x) for x in b], autojunk=False).ratio()
+    return max(exact, alike - 0.02)
 
 
 def trim(a, sr, thr=0.012, pad=0.04):

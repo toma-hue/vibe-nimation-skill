@@ -71,3 +71,38 @@ export function bars(ctx, k = 1, h = 160) { if (k <= 0) return; ctx.save(); ctx.
 export function fade(ctx, k, color = '#000') { if (k <= 0) return; ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = clamp(k); ctx.fillStyle = color; ctx.fillRect(0, 0, W, H); ctx.restore(); }
 /** red/teal pulse for danger, k 0..1 */
 export function pulse(ctx, t, k = 1, color = '#C0182F') { if (k <= 0) return; ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); const a = (0.25 + 0.2 * Math.sin(t * 8)) * k; const g = ctx.createRadialGradient(W / 2, H / 2, H * 0.25, W / 2, H / 2, H * 0.7); g.addColorStop(0, rgba(color, 0)); g.addColorStop(1, rgba(color, a)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); ctx.restore(); }
+
+// ---------- shot helpers: framing that is the same for kids and adults ----------
+// Each returns {x, y, s} for drawCharacter(ctx, S, f.x, f.y, f.s, …). y = feet; the face lands at faceY on screen
+// (before the camera). Head size on screen depends only on the shot, not on the character's height or head size.
+const hk = (S) => ((S && S.build) || {}).headSize || 1, hh = (S) => ((S && S.build) || {}).height || 1;
+const headFeet = (S, s, faceY) => faceY + s * hh(S) * (760 + 70 * hk(S));
+/** extreme close-up: eyes and mouth fill the frame */
+export const extremeCloseUp = (S, o = {}) => { const s = 3.6 / (hh(S) * hk(S)); return { x: o.x ?? 540, y: headFeet(S, s, o.faceY ?? 900), s }; };
+/** close-up: head and shoulders, face ≈ 440 px tall */
+export const closeUp = (S, o = {}) => { const s = 2.75 / (hh(S) * hk(S)); return { x: o.x ?? 540, y: headFeet(S, s, o.faceY ?? 860), s }; };
+/** medium: waist up */
+export const medium = (S, o = {}) => { const s = 1.55 / (hh(S) * hk(S)); return { x: o.x ?? 540, y: headFeet(S, s, o.faceY ?? 700), s }; };
+/** wide: full body on the floor line; one scale for everyone so heights stay true (kids are smaller) */
+export const wide = (S, o = {}) => ({ x: o.x ?? 540, y: o.floor ?? 1700, s: o.s ?? 0.62 });
+/** two people in one medium shot at their true relative heights (the taller one framed like medium()) */
+export const twoShot = (A, B, o = {}) => {
+  const s = 1.45 / Math.max(hh(A) * hk(A), hh(B) * hk(B)), tall = hh(A) >= hh(B) ? A : B, y = headFeet(tall, s, o.faceY ?? 720);
+  return [{ x: o.xA ?? 360, y, s }, { x: o.xB ?? 720, y, s }];
+};
+
+/** camera keyframe that puts world point (wx, wy), drawn on a layer with parallax f, at screen (sx, sy) — default centre.
+ *  Use it for anything not on the actors' layer (a phone on the wall at f 0.6, a sign at f 0.35…):
+ *  camAt(lt, [[0, focus(820, 1180, 0.6)], [sh.dur, focus(820, 1180, 0.6, { zoom: 1.25 })]]) */
+export function focus(wx, wy, f, o = {}) {
+  const zoom = o.zoom ?? 1, ff = Math.max(0.05, f), z = 1 + (zoom - 1) * ff, sx = o.sx ?? W / 2, sy = o.sy ?? H / 2;
+  return { x: (wx - W / 2 - (sx - W / 2) / z) / ff, y: (wy - 960 - (sy - H / 2) / z) / ff, zoom, cy: 960, rot: o.rot ?? 0 };
+}
+
+/** register an important prop's box (in the current drawing coordinates) for the framing check — call it right where
+ *  you draw the prop: mark(c, 'wall phone', x0, y0, x1, y1). Characters register themselves. */
+export function mark(ctx, name, x0, y0, x1, y1) {
+  const R = globalThis.__VN_PROBE; if (!R || !ctx.canvas || ctx.canvas.id !== 'out') return;
+  const M = ctx.getTransform(), ps = [[x0, y0], [x1, y0], [x0, y1], [x1, y1]].map(([x, y]) => M.transformPoint({ x, y }));
+  R.push({ kind: 'prop', name, box: [Math.min(...ps.map((p) => p.x)), Math.min(...ps.map((p) => p.y)), Math.max(...ps.map((p) => p.x)), Math.max(...ps.map((p) => p.y))] });
+}

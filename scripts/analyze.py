@@ -10,7 +10,11 @@ Writes <output_root>/_lucru/<episode-id>/analysis/:
                      loudness and the lines spoken in it, and which contact sheet shows it
   transcript.txt     "[12:03.4] line" one per Whisper segment;  transcript.json  [{s, e, text}]
   scenes.json        [{i, start, end, loud, words, sheet}]
-  sheets/sheet_NN_<from>-<to>.jpg   5×4 grids of frames with time + scene number (open every one)
+  packs/pack_NN.jpg  4 contact sheets per image (80 frames), still readable — OPEN THESE to watch the episode
+  scene_index.md     one line per scene (time, length, pack, dialogue) with "place / who" to fill in while watching;
+                     later steps read this text instead of reopening images
+  sheets/sheet_NN_<from>-<to>.jpg   the single 5×4 sheets the packs are made of (open one only to look closer)
+  credit / logo scenes (black frames with text) are detected, left out of the packs and marked in overview.md
   energy.json        loudness per second (dB) — action and music peaks
   thumbs/            2 frames per second, 384 px (internal)
 """
@@ -107,6 +111,24 @@ def scenes_from_thumbs(thumbs, min_len=1.0):
     return [(times[i], times[i + 1] if i + 1 < len(times) else end) for i in range(len(times))]
 
 
+def frame_kind(path):
+    """'text' (dark frame with sparse bright low-colour pixels: credits, title cards, logos), 'black' or 'picture'"""
+    a = np.asarray(Image.open(path).convert('RGB'), dtype=np.float32)
+    lum = a.mean(axis=2); sat = a.max(axis=2) - a.min(axis=2); bright = lum > 150
+    if lum.mean() < 40 and np.median(lum) < 25 and 0.0004 < bright.mean() < 0.2 and sat[bright].mean() < 70: return 'text'
+    if lum.mean() < 10: return 'black'
+    return 'picture'
+
+
+def pack(sheets, out, scale=0.66):
+    """2×2 contact sheets in one image (the cheap way to watch: one image = 80 frames)"""
+    ims = [Image.open(p) for p in sheets]
+    w, h = int(ims[0].width * scale), int(ims[0].height * scale)
+    P = Image.new('RGB', (w * 2 + 8, h * 2 + 8), (8, 6, 10))
+    for i, im in enumerate(ims): P.paste(im.resize((w, int(im.height * scale))), ((i % 2) * (w + 8), (i // 2) * (h + 8)))
+    P.save(out, quality=80)
+
+
 def energy(wav):
     import soundfile as sf
     a, sr = sf.read(str(wav), dtype='float32')
@@ -184,11 +206,13 @@ def main():
     sc = scenes_from_thumbs(thumbs)
 
     # pick frames: every scene's middle + one per 6 s inside long scenes
-    picks = []
+    picks, credit = [], set()
     for i, (s, e) in enumerate(sc):
         ts = [s + (e - s) / 2] if e - s < 6 else [s + 1 + k * 6 for k in range(int((e - s - 1) // 6) + 1)]
-        for t in ts:
-            k = min(len(thumbs) - 1, int(t * FPS_T)); picks.append((i, t, thumbs[k]))
+        frames = [(t, thumbs[min(len(thumbs) - 1, int(t * FPS_T))]) for t in ts]
+        kinds = [frame_kind(p) for _, p in frames]
+        if sum(k != 'picture' for k in kinds) >= max(1, 0.7 * len(kinds)) and any(k == 'text' for k in kinds): credit.add(i); continue
+        for t, p in frames: picks.append((i, t, p))
     S = A / 'sheets'; S.mkdir(exist_ok=True)
     for old in S.glob('*.jpg'): old.unlink()
     per = 20; sheet_of = {}
@@ -198,13 +222,19 @@ def main():
         name = f'sheet_{n // per + 1:02d}_{mmss(chunk[0][1])}-{mmss(chunk[-1][1])}.jpg'
         sheet([(p, f'{hms(t)[:8]}  sc{i + 1}') for i, t, p in chunk], S / name)
         for i, _, _ in chunk: sheet_of.setdefault(i, name)
+    PK = A / 'packs'; PK.mkdir(exist_ok=True)
+    for old in PK.glob('*.jpg'): old.unlink()
+    names = sorted(S.glob('sheet_*.jpg')); pack_of_sheet = {}
+    for n in range(0, len(names), 4):
+        pname = f'pack_{n // 4 + 1:02d}.jpg'; pack(names[n:n + 4], PK / pname)
+        for x in names[n:n + 4]: pack_of_sheet[x.name] = pname
 
     rows = []
     for i, (s, e) in enumerate(sc):
         lines = [x['text'] for x in tr if x['s'] < e and x['e'] > s]
         loud = float(np.mean(en[int(s):max(int(s) + 1, int(e))])) if en else 0
-        rows.append({'i': i + 1, 'start': round(s, 1), 'end': round(e, 1), 'loud': round(loud, 1),
-                     'words': sum(len(l.split()) for l in lines), 'sheet': sheet_of.get(i), 'lines': lines})
+        rows.append({'i': i + 1, 'start': round(s, 1), 'end': round(e, 1), 'loud': round(loud, 1), 'credits': i in credit,
+                     'words': sum(len(l.split()) for l in lines), 'sheet': sheet_of.get(i), 'pack': pack_of_sheet.get(sheet_of.get(i)), 'lines': lines})
     (A / 'scenes.json').write_text(json.dumps(rows, indent=1, ensure_ascii=False), encoding='utf-8')
 
     h = meta['hints']; peak = np.percentile(en, 90) if en else 0
@@ -215,11 +245,20 @@ def main():
           '## Scenes', '']
     for r in rows:
         star = ' ★' if r['loud'] >= peak else ''
-        md.append(f'### sc{r["i"]}  {hms(r["start"])}–{hms(r["end"])}  ({r["end"] - r["start"]:.0f}s){star}  · {r["sheet"]}')
+        if r['credits']:
+            md.append(f'### sc{r["i"]}  {hms(r["start"])}–{hms(r["end"])}  ({r["end"] - r["start"]:.0f}s)  · [credits / logo — skipped from the packs]'); md.append(''); continue
+        md.append(f'### sc{r["i"]}  {hms(r["start"])}–{hms(r["end"])}  ({r["end"] - r["start"]:.0f}s){star}  · {r["pack"]} / {r["sheet"]}')
         md += [f'> {l}' for l in r['lines']] or ['_(no dialogue)_']
         md.append('')
     (A / 'overview.md').write_text('\n'.join(md), encoding='utf-8')
-    print(f'done → {A / "overview.md"}  ({len(sc)} scenes, {len(list(S.glob("*.jpg")))} sheets)')
+    idx = ['# Scene index — fill "place" and "who" while watching the packs; later steps read this instead of images', '',
+           '| sc | time | len | pack | place | who | dialogue |', '|---|---|---|---|---|---|---|']
+    for r in rows:
+        if r['credits']: idx.append(f'| {r["i"]} | {hms(r["start"])[:8]} | {r["end"] - r["start"]:.0f}s | — | credits/logo | — | |'); continue
+        dl = (' / '.join(r['lines']))[:110].replace('|', '/') + ('…' if len(' / '.join(r['lines'])) > 110 else '')
+        idx.append(f'| {r["i"]} | {hms(r["start"])[:8]} | {r["end"] - r["start"]:.0f}s{" ★" if r["loud"] >= peak else ""} | {(r["pack"] or "")[5:7]} |  |  | {dl} |')
+    (A / 'scene_index.md').write_text('\n'.join(idx), encoding='utf-8')
+    print(f'done → {A / "overview.md"}  ({len(sc)} scenes, {len(list(S.glob("*.jpg")))} sheets in {len(list(PK.glob("*.jpg")))} packs, {len(credit)} credit/logo scenes skipped)')
 
 
 if __name__ == '__main__':

@@ -7,6 +7,8 @@
 // QA matrices for one character — every view × every expression, every pose × every view:
 //   rigcheck.html?id=mike&page=heads     6 views × 8 expressions, big heads
 //   rigcheck.html?id=mike&page=bodies    10 poses × 5 views, full body
+//   rigcheck.html?page=faces             face lineup: every character, front + 3/4, neutral, hair as a flat silhouette
+//   rigcheck.html?page=review&ids=a,b    review pack: the cast line-up + one row of heads per changed character
 // Read them cell by cell: hair covers the head in every view (no bald sides), accessories sit on the head,
 // eyes/brows/mouth read as the named expression, limbs attached, feet on the floor line.
 import { drawCharacter, EXPR, walkPose } from './src/core/rig.js';
@@ -29,7 +31,8 @@ function heads(S) {
       const x = x0 + cw * j, y = y0 + ch * i;
       ctx.save(); ctx.beginPath(); ctx.roundRect(x + 4, y + 4, cw - 8, ch - 8, 10); ctx.fillStyle = CELL; ctx.fill(); ctx.clip();
       // place the head centre in the cell: centre = feet + s·h·(−760 − 70·headK)
-      const feet = y + ch / 2 + 6 + sc * h * (760 + 70 * hk);
+      const hat = (S.accessories || []).some((a) => a.type === 'hat') ? 62 : 0;   // headroom for a crown
+      const feet = y + ch / 2 + 6 + hat + sc * h * (760 + 70 * hk);
       drawCharacter(ctx, S, x + cw / 2, feet, sc, { ...v, expr: v.back ? 'neutral' : e, talk: e === 'shout' ? 0.6 : 0, t: 0.3, wind: 0, shadow: false });
       ctx.restore();
     });
@@ -53,11 +56,52 @@ function bodies(S) {
     });
   });
 }
+const headFeet = (S, sc, cy) => { const h = (S.build || {}).height || 1, hk = (S.build || {}).headSize || 1; return cy + sc * h * (760 + 70 * hk); };
+const flatHair = (S) => ({ ...S, _flatHair: true, accessories: (S.accessories || []).filter((a) => !['cap', 'beanie', 'hat', 'headband'].includes(a.type)) });
+const byRole = (list) => [...list].sort((a, b) => (a.role === 'main' ? 0 : 1) - (b.role === 'main' ? 0 : 1));
+
+function faces(list) {
+  const L = byRole(list), cols = Math.min(7, L.length), rows = Math.ceil(L.length / cols), cw = 360, ch = 300, x0 = 20, y0 = 90;
+  cv.width = x0 * 2 + cw * cols; cv.height = y0 + ch * rows + 20;
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, cv.width, cv.height);
+  txt('Fețe — față + 3/4, neutru, părul ca siluetă plată (nicio față nu trebuie să semene cu alta)', 30, 56, 30, TXT, 'left');
+  L.forEach((S, i) => {
+    const x = x0 + (i % cols) * cw, y = y0 + Math.floor(i / cols) * ch, F = flatHair(S);
+    ctx.save(); ctx.beginPath(); ctx.roundRect(x + 4, y + 4, cw - 8, ch - 70, 10); ctx.fillStyle = CELL; ctx.fill(); ctx.clip();
+    const hk = (S.build || {}).headSize || 1, h = (S.build || {}).height || 1, sc = 0.66 / (hk * h);
+    drawCharacter(ctx, F, x + cw * 0.28, headFeet(S, sc, y + 140), sc, { t: 0.3, wind: 0, shadow: false });
+    drawCharacter(ctx, F, x + cw * 0.72, headFeet(S, sc, y + 140), sc, { t: 0.3, wind: 0, shadow: false, turn: 0.55 });
+    ctx.restore();
+    txt(S.name, x + cw / 2, y + ch - 40, 19, TXT); txt((S.faceRead || '').split(';').pop().replace('signature:', '').trim().slice(0, 44), x + cw / 2, y + ch - 20, 14, DIM);
+  });
+}
+function review(list, ids) {
+  const L = byRole(list), pick = L.filter((c) => ids.includes(c.id)), cw = 250, ch = 250, x0 = 150, top = 380;
+  const cells = [['FAȚĂ', { turn: 0 }, 'neutral'], ['3/4 DR', { turn: 0.55 }, 'neutral'], ['PROFIL DR', { turn: 1 }, 'neutral'], ['3/4 ST', { turn: -0.55 }, 'neutral'], ['PROFIL ST', { turn: -1 }, 'neutral'], ['SPATE', { back: true }, 'neutral'], ['3/4 FURIOS', { turn: 0.55 }, 'angry'], ['FAȚĂ VORBEȘTE', { turn: 0 }, 'shout']];
+  cv.width = Math.max(x0 + cw * cells.length + 20, 2000); cv.height = top + 40 + ch * pick.length + 20;
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, cv.width, cv.height);
+  txt('Review — distribuția + capetele personajelor modificate', 30, 50, 30, TXT, 'left');
+  const n = L.length, sw = (cv.width - 60) / n;                         // line-up strip at true relative heights
+  L.forEach((S, i) => { const x = 30 + sw * (i + 0.5); drawCharacter(ctx, S, x, top - 20, Math.min(0.3, sw / 300), { t: 0.3, wind: 0, turn: 0.15 }); txt(S.name.split(' ')[0], x, top + 6, 15, ids.includes(S.id) ? '#FFD400' : DIM); });
+  cells.forEach(([n2], j) => txt(n2, x0 + cw * j + cw / 2, top + 34, 16, DIM));
+  pick.forEach((S, i) => {
+    const y = top + 40 + ch * i; txt(S.name, 20, y + ch / 2, 18, TXT, 'left');
+    const hk = (S.build || {}).headSize || 1, sc = 0.9 / hk;
+    cells.forEach(([, v, e], j) => {
+      const x = x0 + cw * j; ctx.save(); ctx.beginPath(); ctx.roundRect(x + 4, y + 4, cw - 8, ch - 8, 10); ctx.fillStyle = CELL; ctx.fill(); ctx.clip();
+      const hat = (S.accessories || []).some((a) => a.type === 'hat') ? 62 : 0;
+      drawCharacter(ctx, S, x + cw / 2, headFeet(S, sc, y + ch / 2 + 10 + hat), sc, { ...v, expr: v.back ? 'neutral' : e, talk: e === 'shout' ? 0.6 : 0, t: 0.3, wind: 0, shadow: false });
+      ctx.restore();
+    });
+  });
+}
+
 (async () => {
   const f = new FontFace('Inter', 'url(fonts/Inter.ttf)', { weight: '100 900' }); await f.load(); document.fonts.add(f);
   const d = await (await fetch(q.get('file') || 'data/characters.json')).json(), list = d.characters || d;
-  const S = list.find((c) => c.id === q.get('id')) || list[0];
-  (q.get('page') === 'bodies' ? bodies : heads)(S);
+  if (q.get('page') === 'faces') faces(list);
+  else if (q.get('page') === 'review') review(list, (q.get('ids') || '').split(',').filter(Boolean).length ? q.get('ids').split(',') : list.map((c) => c.id));
+  else { const S = list.find((c) => c.id === q.get('id')) || list[0]; (q.get('page') === 'bodies' ? bodies : heads)(S); }
   window.DONE = true;
 })().catch((e) => { document.body.insertAdjacentHTML('beforeend', `<pre style="color:#f88">${e.stack}</pre>`); window.DONE = 'error: ' + e.message; });
 </script>

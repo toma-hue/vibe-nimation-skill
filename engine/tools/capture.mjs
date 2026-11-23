@@ -144,13 +144,39 @@ try {
     const w = await openWorker(port);
     const sc = await w.evalv('OP.scenes()');
     const ids = rest[0] ? rest[0].split(',') : sc.map((s) => s.id);
+    let framing = 0;
     for (const id of ids) {
       const s = sc.find((x) => x.id === id); if (!s) continue;
       const next = sc[s.i + 1]?.start ?? DUR, f0 = Math.ceil(s.start * FPS), f1 = Math.floor(next * FPS) - 1;
       const step = Math.max(1, Math.floor((f1 - f0) / 6)); let tot = 0, n = 0, max = 0;
       for (let f = f0; f <= f1; f += step) { const ms = await w.evalv(`OP.bench(${f})`); tot += ms; n++; max = Math.max(max, ms); }
       console.log(`${id.padEnd(4)} ${s.start.toFixed(2)}-${next.toFixed(2)}  avg ${(tot / n).toFixed(0)}ms  max ${max.toFixed(0)}ms  ${s.tech}`);
+      // framing: characters / marked props off the 9:16 frame or under the caption band, faces under the captions
+      const fstep = Math.max(1, Math.floor((f1 - f0) / 8)), warn = new Map();
+      const vis = (b, W, H) => { const w = Math.max(0, Math.min(b[2], W) - Math.max(b[0], 0)), h = Math.max(0, Math.min(b[3], H) - Math.max(b[1], 0)); return (w * h) / Math.max(1, (b[2] - b[0]) * (b[3] - b[1])); };
+      const ov = (a, b) => { const w = Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0])), h = Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1])); return (w * h) / Math.max(1, (a[2] - a[0]) * (a[3] - a[1])); };
+      let samples = 0;
+      for (let f = f0; f <= f1; f += fstep) {
+        const P = await w.evalv(`OP.probe(${f})`); samples++;
+        for (const it of P.items) {
+          if ((s.allowOff || []).includes(it.name)) continue;
+          const add = (k) => { const e = warn.get(k) || { n: 0, t: f / FPS }; e.n++; warn.set(k, e); };
+          const v = vis(it.box, P.W, P.H);
+          if (it.kind === 'character') {
+            const fv = vis(it.face, P.W, P.H);
+            if (v === 0) add(`off-frame: ${it.name}`);
+            else if (fv < 0.75) add(`face cut by the frame edge: ${it.name}`);
+            if (P.cap && fv > 0 && ov(it.face, P.cap) > 0.2) add(`face under the captions: ${it.name}`);
+          } else {
+            if (v < 0.5) add(`off-frame: ${it.name} (${Math.round(v * 100)}% visible)`);
+            if (P.cap && ov(it.box, P.cap) > 0.5) add(`under the caption band: ${it.name}`);
+          }
+        }
+      }
+      for (const [k, e] of warn) { console.log(`  ⚠ ${k}  (${e.n}/${samples} samples, first at ${e.t.toFixed(2)}s)`); framing++; }
     }
+    if (framing) console.log(`FRAMING WARNINGS: ${framing} — fix them (shot helpers closeUp/medium/wide, focus(), captions:{y}) or list deliberate exits in the shot's allowOff: [names]`);
+    else console.log('framing ok: no character, face or marked prop off-frame or under the captions');
     const errs = await w.evalv('OP.errors()'); if (errs.length) { console.log('SCENE ERRORS:'); errs.forEach((e) => console.log(' ', e.id, e.msg, '\n', (e.stack || '').split('\n').slice(0, 4).join('\n'))); exit = 2; }
     if (w.logs.length) console.log('PAGE LOGS:\n ' + [...new Set(w.logs)].slice(0, 30).join('\n '));
     w.close();

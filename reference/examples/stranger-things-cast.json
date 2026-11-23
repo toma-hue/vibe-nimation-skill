@@ -1,0 +1,952 @@
+{
+ "series": "Stranger Things",
+ "characters": [
+  {
+   "id": "mike",
+   "name": "Mike Wheeler",
+   "gender": "m",
+   "role": "main",
+   "faceRead": "Long narrow face, almond eyes, straight longish nose, wide expressive mouth; signature: long face + big mouth under a black mop.",
+   "build": {
+    "height": 0.84,
+    "headSize": 1.08,
+    "shoulders": 0.9
+   },
+   "skin": "#F0CDB0",
+   "hair": {
+    "style": "custom",
+    "color": "#17110F",
+    "top": 24,
+    "width": 16,
+    "length": -788,
+    "fringe": "messy",
+    "fringeLen": -826,
+    "texture": "shaggy",
+    "amp": 6,
+    "part": 0
+   },
+   "face": {
+    "shape": "long",
+    "width": 0.94,
+    "length": 1.12,
+    "cheeks": {
+     "bones": 0.3
+    }
+   },
+   "eyes": {
+    "color": "#4A3626",
+    "size": 1.0,
+    "shape": "almond"
+   },
+   "brows": {
+    "thick": 7,
+    "arch": 0.3
+   },
+   "nose": {
+    "shape": "straight",
+    "length": 1.15
+   },
+   "mouth": {
+    "width": 1.28,
+    "lips": 0.3
+   },
+   "top": {
+    "type": "jacket",
+    "color": "#2E3B5C",
+    "inner": "#A8432E"
+   },
+   "bottom": {
+    "type": "jeans",
+    "color": "#41557A"
+   },
+   "shoes": {
+    "color": "#E8E2D8",
+    "sole": "#9A928A"
+   },
+   "look": "Lanky kid, black shaggy mop over the eyes and ears, navy windbreaker over a rust shirt, jeans, white sneakers."
+  },
+  {
+   "id": "will",
+   "name": "Will Byers",
+   "gender": "m",
+   "role": "main",
+   "faceRead": "Small oval face, slightly round eyes, small button nose, small mouth; signature: delicate small features under a brown bowl cut.",
+   "build": {
+    "height": 0.78,
+    "headSize": 1.12,
+    "shoulders": 0.85
+   },
+   "skin": "#F2D2B8",
+   "hair": {
+    "style": "custom",
+    "color": "#5A3A22",
+    "top": 14,
+    "width": 12,
+    "length": -820,
+    "fringe": "full",
+    "fringeLen": -842,
+    "texture": "straight",
+    "part": 0
+   },
+   "face": {
+    "shape": "oval",
+    "width": 0.94,
+    "length": 0.96
+   },
+   "eyes": {
+    "color": "#5A6A3A",
+    "size": 1.08,
+    "shape": "round"
+   },
+   "brows": {
+    "thick": 5,
+    "arch": 0.5,
+    "tilt": -0.3
+   },
+   "nose": {
+    "shape": "button",
+    "size": 0.8
+   },
+   "mouth": {
+    "width": 0.82,
+    "lips": 0.2
+   },
+   "top": {
+    "type": "shirt",
+    "color": "#B9926A",
+    "detail": "stripe",
+    "detailColor": "#8A3A2E"
+   },
+   "bottom": {
+    "type": "jeans",
+    "color": "#4A5A7A"
+   },
+   "shoes": {
+    "color": "#D8D0C4",
+    "sole": "#8A827A"
+   },
+   "look": "Small boy, brown bowl cut, tan plaid flannel shirt, jeans."
+  },
+  {
+   "id": "dustin",
+   "name": "Dustin Henderson",
+   "gender": "m",
+   "role": "main",
+   "faceRead": "Round face, chubby cheeks, round eyes, upturned button nose, wide grin with a gap in the teeth; signature: gap teeth + round cheeks under a trucker cap.",
+   "build": {
+    "height": 0.76,
+    "headSize": 1.14,
+    "shoulders": 0.95,
+    "hips": 1.05
+   },
+   "skin": "#F1CBAA",
+   "hair": {
+    "style": "custom",
+    "color": "#7A4E2C",
+    "top": 18,
+    "width": 22,
+    "length": -786,
+    "fringe": "none",
+    "hairline": -880,
+    "texture": "curly",
+    "amp": 7,
+    "part": 0
+   },
+   "face": {
+    "shape": "round",
+    "width": 1.08,
+    "length": 0.94,
+    "cheeks": {
+     "chubby": 0.9
+    },
+    "marks": {
+     "freckles": 0.2
+    }
+   },
+   "eyes": {
+    "color": "#4A6A8A",
+    "size": 1.02,
+    "shape": "round"
+   },
+   "brows": {
+    "thick": 6,
+    "arch": 0.6,
+    "tilt": -0.2
+   },
+   "nose": {
+    "shape": "upturned",
+    "size": 0.95
+   },
+   "mouth": {
+    "width": 1.15,
+    "lips": 0.3,
+    "curve": 0.5,
+    "gap": true
+   },
+   "top": {
+    "type": "sweater",
+    "color": "#3E6A8C",
+    "detail": "stripe",
+    "detailColor": "#E8DCCB"
+   },
+   "bottom": {
+    "type": "pants",
+    "color": "#8A7B5A"
+   },
+   "shoes": {
+    "color": "#E8E2D8",
+    "sole": "#9A928A"
+   },
+   "accessories": [
+    {
+     "type": "cap",
+     "color": "#2D4A8A"
+    }
+   ],
+   "look": "Short round kid, brown curls under a blue trucker cap, blue striped sweater, khakis."
+  },
+  {
+   "id": "lucas",
+   "name": "Lucas Sinclair",
+   "gender": "m",
+   "role": "main",
+   "faceRead": "Square-ish face, strong straight brows set low, almond eyes, wide nose, full lips; signature: strong stern brows + camo bandana.",
+   "build": {
+    "height": 0.8,
+    "headSize": 1.1,
+    "shoulders": 0.95
+   },
+   "skin": "#7A4A32",
+   "hair": {
+    "style": "custom",
+    "color": "#140E0C",
+    "top": 6,
+    "width": -2,
+    "length": -846,
+    "fringe": "none",
+    "hairline": -884,
+    "texture": "curly",
+    "amp": 3,
+    "buzz": true
+   },
+   "face": {
+    "shape": "square",
+    "width": 1.0,
+    "length": 1.0,
+    "cheeks": {
+     "bones": 0.4
+    }
+   },
+   "eyes": {
+    "color": "#2A1C14",
+    "size": 0.95,
+    "shape": "almond"
+   },
+   "brows": {
+    "thick": 11,
+    "arch": 0.1,
+    "tilt": 0.55
+   },
+   "nose": {
+    "shape": "wide",
+    "size": 1.1
+   },
+   "mouth": {
+    "width": 1.05,
+    "lips": 0.7,
+    "curve": -0.2
+   },
+   "top": {
+    "type": "jacket",
+    "color": "#4B5A3A",
+    "inner": "#C8B48A"
+   },
+   "bottom": {
+    "type": "jeans",
+    "color": "#3E4E6E"
+   },
+   "shoes": {
+    "color": "#E8E2D8",
+    "sole": "#9A928A"
+   },
+   "accessories": [
+    {
+     "type": "headband",
+     "color": "#5F6B3A"
+    }
+   ],
+   "look": "Kid with close-cropped hair, camo bandana, olive field jacket, jeans."
+  },
+  {
+   "id": "eleven",
+   "name": "Eleven",
+   "gender": "f",
+   "role": "main",
+   "faceRead": "Oval face with a near-shaved head, huge round eyes, tiny button nose, small mouth; signature: enormous eyes on a buzzed head.",
+   "build": {
+    "height": 0.77,
+    "headSize": 1.12,
+    "shoulders": 0.82
+   },
+   "skin": "#F2D5C2",
+   "hair": {
+    "style": "custom",
+    "color": "#6A5444",
+    "top": 2,
+    "width": -6,
+    "length": -852,
+    "fringe": "none",
+    "hairline": -892,
+    "buzz": true
+   },
+   "face": {
+    "shape": "oval",
+    "width": 0.95,
+    "length": 0.98
+   },
+   "eyes": {
+    "color": "#4A3020",
+    "size": 1.32,
+    "shape": "round",
+    "lashes": 0.4
+   },
+   "brows": {
+    "thick": 5,
+    "arch": 0.3,
+    "tilt": -0.35
+   },
+   "nose": {
+    "shape": "button",
+    "size": 0.78
+   },
+   "mouth": {
+    "width": 0.82,
+    "lips": 0.4,
+    "curve": -0.2
+   },
+   "top": {
+    "type": "dress",
+    "color": "#E9A9B9",
+    "sleeves": "short"
+   },
+   "shoes": {
+    "color": "#E8E2D8",
+    "sole": "#9A928A"
+   },
+   "look": "Thin girl with a shaved head, pink dress, white sneakers."
+  },
+  {
+   "id": "joyce",
+   "name": "Joyce Byers",
+   "gender": "f",
+   "role": "main",
+   "faceRead": "Narrow long face, hooded tired eyes with bags, thin straight nose, thin mouth with a worried rest; signature: exhausted eyes + shaggy curtain hair.",
+   "build": {
+    "height": 0.96,
+    "shoulders": 0.9
+   },
+   "skin": "#EDCBB0",
+   "hair": {
+    "style": "custom",
+    "color": "#3A281E",
+    "top": 16,
+    "width": 18,
+    "length": -650,
+    "fringe": "curtain",
+    "fringeLen": -834,
+    "texture": "shaggy",
+    "amp": 7,
+    "part": -8,
+    "taper": 0.85
+   },
+   "face": {
+    "shape": "long",
+    "width": 0.9,
+    "length": 1.06,
+    "cheeks": {
+     "bones": 0.6
+    },
+    "age": {
+     "bags": 0.6,
+     "forehead": 0.2,
+     "smile": 0.3
+    }
+   },
+   "eyes": {
+    "color": "#4A3626",
+    "size": 1.04,
+    "shape": "hooded",
+    "lashes": 0.6
+   },
+   "brows": {
+    "thick": 5,
+    "arch": 0.5,
+    "tilt": -0.6
+   },
+   "nose": {
+    "shape": "straight",
+    "size": 0.95,
+    "length": 1.1
+   },
+   "mouth": {
+    "width": 0.95,
+    "lips": 0.3,
+    "curve": -0.4
+   },
+   "top": {
+    "type": "jacket",
+    "color": "#6B5A3A",
+    "inner": "#C8B8A0"
+   },
+   "bottom": {
+    "type": "jeans",
+    "color": "#4A5A7A"
+   },
+   "shoes": {
+    "color": "#4A3426",
+    "sole": "#2A2020"
+   },
+   "look": "Thin anxious mother, shaggy dark-brown hair to the shoulders, olive-tan coat, jeans."
+  },
+  {
+   "id": "jonathan",
+   "name": "Jonathan Byers",
+   "gender": "m",
+   "role": "main",
+   "faceRead": "Long narrow face, hooded downcast eyes, long straight nose, thin closed mouth; signature: brooding hooded eyes under a side-swept shag.",
+   "build": {
+    "height": 0.98,
+    "shoulders": 0.95
+   },
+   "skin": "#EECDB2",
+   "hair": {
+    "style": "custom",
+    "color": "#3B2618",
+    "top": 16,
+    "width": 12,
+    "length": -792,
+    "fringe": "side",
+    "fringeLen": -836,
+    "texture": "shaggy",
+    "amp": 5,
+    "part": -34
+   },
+   "face": {
+    "shape": "long",
+    "width": 0.92,
+    "length": 1.1,
+    "cheeks": {
+     "bones": 0.5
+    }
+   },
+   "eyes": {
+    "color": "#4A3626",
+    "size": 0.95,
+    "shape": "hooded"
+   },
+   "brows": {
+    "thick": 7,
+    "arch": 0.2,
+    "tilt": -0.2
+   },
+   "nose": {
+    "shape": "straight",
+    "length": 1.2
+   },
+   "mouth": {
+    "width": 0.95,
+    "curve": -0.2
+   },
+   "top": {
+    "type": "jacket",
+    "color": "#5A4A32",
+    "inner": "#9A3A2E"
+   },
+   "bottom": {
+    "type": "jeans",
+    "color": "#2E3A52"
+   },
+   "shoes": {
+    "color": "#3A3030",
+    "sole": "#1E1A1A"
+   },
+   "look": "Lean teen, shaggy dark-brown hair swept over one eye, brown jacket over a red shirt, dark jeans."
+  },
+  {
+   "id": "hopper",
+   "name": "Jim Hopper",
+   "gender": "m",
+   "role": "main",
+   "faceRead": "Big square face, heavy low brows, small hooded eyes with bags, broad nose, stubble; signature: heavy brow + tired bags under a campaign hat.",
+   "build": {
+    "height": 1.08,
+    "shoulders": 1.22,
+    "hips": 1.12
+   },
+   "skin": "#E2B08C",
+   "hair": {
+    "style": "custom",
+    "color": "#7A5A3A",
+    "top": 8,
+    "width": 2,
+    "length": -836,
+    "fringe": "swept",
+    "quiff": 0.3
+   },
+   "face": {
+    "shape": "square",
+    "width": 1.1,
+    "length": 1.05,
+    "beard": "stubble",
+    "chin": {
+     "size": 1.1
+    },
+    "age": {
+     "bags": 1.0,
+     "forehead": 0.7,
+     "smile": 0.6
+    }
+   },
+   "eyes": {
+    "color": "#4A6A7A",
+    "size": 0.88,
+    "shape": "hooded"
+   },
+   "brows": {
+    "thick": 12,
+    "arch": 0.2,
+    "tilt": 0.35
+   },
+   "nose": {
+    "shape": "wide",
+    "size": 1.15
+   },
+   "mouth": {
+    "width": 1.05,
+    "curve": -0.3
+   },
+   "top": {
+    "type": "shirt",
+    "color": "#B7A06E"
+   },
+   "bottom": {
+    "type": "pants",
+    "color": "#4E4A3A"
+   },
+   "shoes": {
+    "color": "#4A3426",
+    "sole": "#2A2020"
+   },
+   "accessories": [
+    {
+     "type": "hat",
+     "color": "#B89A64",
+     "band": "#5A4028"
+    }
+   ],
+   "look": "Big police chief, tan uniform shirt, dark olive trousers, brown boots, stubble, tan campaign hat."
+  },
+  {
+   "id": "nancy",
+   "name": "Nancy Wheeler",
+   "gender": "f",
+   "role": "main",
+   "faceRead": "Heart-shaped face, large almond eyes with lashes, small upturned nose, full lips; signature: big bright eyes + side-parted wavy auburn hair.",
+   "build": {
+    "height": 0.95,
+    "shoulders": 0.88
+   },
+   "skin": "#F1D0B8",
+   "hair": {
+    "style": "custom",
+    "color": "#5A2E1E",
+    "top": 14,
+    "width": 16,
+    "length": -660,
+    "fringe": "side",
+    "fringeLen": -852,
+    "texture": "wavy",
+    "amp": 6,
+    "part": -28,
+    "flip": 6
+   },
+   "face": {
+    "shape": "heart",
+    "width": 0.95,
+    "length": 1.0
+   },
+   "eyes": {
+    "color": "#4A6A8A",
+    "size": 1.12,
+    "shape": "almond",
+    "lashes": 1
+   },
+   "brows": {
+    "thick": 5,
+    "arch": 0.6
+   },
+   "nose": {
+    "shape": "upturned",
+    "size": 0.85
+   },
+   "mouth": {
+    "width": 0.95,
+    "lips": 0.8,
+    "curve": 0.2
+   },
+   "top": {
+    "type": "sweater",
+    "color": "#E8B8C0",
+    "detail": "stripe",
+    "detailColor": "#F4EFE6"
+   },
+   "bottom": {
+    "type": "jeans",
+    "color": "#6A7FA0"
+   },
+   "shoes": {
+    "color": "#F0EAE0",
+    "sole": "#A8A098"
+   },
+   "look": "Teen girl, side-parted wavy auburn hair past the shoulders, pink sweater, light jeans."
+  },
+  {
+   "id": "steve",
+   "name": "Steve Harrington",
+   "gender": "m",
+   "role": "support",
+   "faceRead": "Square jaw, almond eyes, straight nose, wide mouth with a cocky smirk; signature: huge swept-up quiff.",
+   "build": {
+    "height": 1.02,
+    "shoulders": 1.08
+   },
+   "skin": "#EDC4A2",
+   "hair": {
+    "style": "custom",
+    "color": "#6B4A2E",
+    "top": 38,
+    "width": 14,
+    "length": -818,
+    "fringe": "swept",
+    "quiff": 1,
+    "texture": "wavy",
+    "amp": 4,
+    "part": -20
+   },
+   "face": {
+    "shape": "square",
+    "width": 1.02,
+    "length": 1.04,
+    "chin": {
+     "size": 1.08
+    },
+    "marks": {
+     "mole": [
+      -30,
+      -770
+     ]
+    }
+   },
+   "eyes": {
+    "color": "#5A4030",
+    "size": 0.96,
+    "shape": "almond"
+   },
+   "brows": {
+    "thick": 8,
+    "arch": 0.4
+   },
+   "nose": {
+    "shape": "straight",
+    "size": 1.05
+   },
+   "mouth": {
+    "width": 1.12,
+    "curve": 0.4
+   },
+   "top": {
+    "type": "shirt",
+    "color": "#2D5A8A"
+   },
+   "bottom": {
+    "type": "jeans",
+    "color": "#3E4E6E"
+   },
+   "shoes": {
+    "color": "#E8E2D8",
+    "sole": "#9A928A"
+   },
+   "look": "Popular teen, big swept-up brown hair, blue collared shirt, jeans."
+  },
+  {
+   "id": "barb",
+   "name": "Barb Holland",
+   "gender": "f",
+   "role": "support",
+   "faceRead": "Round face, smaller eyes behind big round glasses, small button nose, freckles; signature: big glasses + short red waves.",
+   "build": {
+    "height": 0.95,
+    "shoulders": 0.92,
+    "hips": 1.05
+   },
+   "skin": "#F2D6C2",
+   "hair": {
+    "style": "custom",
+    "color": "#B5532A",
+    "top": 16,
+    "width": 16,
+    "length": -762,
+    "fringe": "side",
+    "fringeLen": -852,
+    "texture": "wavy",
+    "amp": 5,
+    "part": -26
+   },
+   "face": {
+    "shape": "round",
+    "width": 1.06,
+    "length": 0.98,
+    "glasses": {
+     "shape": "round",
+     "color": "#6A4A3A"
+    },
+    "marks": {
+     "freckles": 0.8
+    }
+   },
+   "eyes": {
+    "color": "#5A6A4A",
+    "size": 0.9,
+    "shape": "almond",
+    "lashes": 0.4
+   },
+   "brows": {
+    "thick": 4,
+    "arch": 0.4,
+    "color": "#9A4A2A"
+   },
+   "nose": {
+    "shape": "button",
+    "size": 0.9
+   },
+   "mouth": {
+    "width": 0.9,
+    "lips": 0.4
+   },
+   "top": {
+    "type": "jacket",
+    "color": "#8C6A4A",
+    "inner": "#D8C8A8"
+   },
+   "bottom": {
+    "type": "pants",
+    "color": "#5A4A3A"
+   },
+   "shoes": {
+    "color": "#4A3426",
+    "sole": "#2A2020"
+   },
+   "look": "Teen girl, short wavy red hair, big round glasses, brown jacket over a cream top."
+  },
+  {
+   "id": "karen",
+   "name": "Karen Wheeler",
+   "gender": "f",
+   "role": "support",
+   "faceRead": "Oval face, almond eyes with lashes, straight small nose, full lips with a soft smile; signature: big blonde feathered 80s hair.",
+   "build": {
+    "height": 0.97
+   },
+   "skin": "#F0CDB4",
+   "hair": {
+    "style": "custom",
+    "color": "#D8B070",
+    "top": 24,
+    "width": 24,
+    "length": -690,
+    "fringe": "curtain",
+    "fringeLen": -846,
+    "texture": "wavy",
+    "amp": 7,
+    "part": 0,
+    "flip": 12
+   },
+   "face": {
+    "shape": "oval",
+    "width": 1.0,
+    "length": 1.02,
+    "age": {
+     "smile": 0.3
+    }
+   },
+   "eyes": {
+    "color": "#4A6A8A",
+    "size": 1.0,
+    "shape": "almond",
+    "lashes": 1
+   },
+   "brows": {
+    "thick": 4,
+    "arch": 0.6,
+    "color": "#A88050"
+   },
+   "nose": {
+    "shape": "straight",
+    "size": 0.9
+   },
+   "mouth": {
+    "width": 1.0,
+    "lips": 0.9,
+    "curve": 0.3
+   },
+   "top": {
+    "type": "sweater",
+    "color": "#7A3A5A"
+   },
+   "bottom": {
+    "type": "pants",
+    "color": "#4A3A44"
+   },
+   "shoes": {
+    "color": "#3A2A2A",
+    "sole": "#1E1A1A"
+   },
+   "look": "Suburban mom, big blonde feathered hair, plum sweater, dark slacks."
+  },
+  {
+   "id": "benny",
+   "name": "Benny Hammond",
+   "gender": "m",
+   "role": "support",
+   "faceRead": "Wide round face, small kind eyes, broad nose, full beard, smile lines; signature: big full beard on a round friendly face.",
+   "build": {
+    "height": 1.03,
+    "shoulders": 1.25,
+    "hips": 1.28
+   },
+   "skin": "#D9A27E",
+   "hair": {
+    "style": "custom",
+    "color": "#2A1E18",
+    "top": 6,
+    "width": 2,
+    "length": -840,
+    "fringe": "none",
+    "hairline": -872
+   },
+   "face": {
+    "shape": "round",
+    "width": 1.16,
+    "length": 1.0,
+    "beard": "full",
+    "cheeks": {
+     "chubby": 0.7
+    },
+    "age": {
+     "smile": 0.7,
+     "bags": 0.4
+    }
+   },
+   "eyes": {
+    "color": "#3A2A20",
+    "size": 0.86,
+    "shape": "almond"
+   },
+   "brows": {
+    "thick": 9,
+    "arch": 0.5,
+    "tilt": -0.1
+   },
+   "nose": {
+    "shape": "wide",
+    "size": 1.18
+   },
+   "mouth": {
+    "width": 1.05,
+    "curve": 0.4
+   },
+   "top": {
+    "type": "shirt",
+    "color": "#E8E2D8"
+   },
+   "bottom": {
+    "type": "pants",
+    "color": "#3A3A44"
+   },
+   "shoes": {
+    "color": "#2A2424",
+    "sole": "#1A1616"
+   },
+   "look": "Big bearded diner owner, short dark hair, white shirt, dark trousers."
+  },
+  {
+   "id": "brenner",
+   "name": "Dr. Martin Brenner",
+   "gender": "m",
+   "role": "support",
+   "faceRead": "Long lean face, narrow cold eyes, long straight nose, thin flat mouth, deep lines; signature: silver slicked-back hair + cold narrow eyes.",
+   "build": {
+    "height": 1.03,
+    "shoulders": 1.0
+   },
+   "skin": "#EBC9B0",
+   "hair": {
+    "style": "custom",
+    "color": "#C9C5BE",
+    "top": 10,
+    "width": 0,
+    "length": -834,
+    "fringe": "swept",
+    "quiff": 0.15,
+    "hairline": -896
+   },
+   "face": {
+    "shape": "long",
+    "width": 0.95,
+    "length": 1.1,
+    "cheeks": {
+     "bones": 0.8
+    },
+    "age": {
+     "bags": 0.5,
+     "forehead": 0.9,
+     "smile": 0.8
+    }
+   },
+   "eyes": {
+    "color": "#5A7A8A",
+    "size": 0.86,
+    "shape": "narrow"
+   },
+   "brows": {
+    "thick": 6,
+    "arch": 0.2,
+    "tilt": 0.2,
+    "color": "#A8A49E"
+   },
+   "nose": {
+    "shape": "straight",
+    "size": 1.05,
+    "length": 1.2
+   },
+   "mouth": {
+    "width": 0.92,
+    "curve": -0.2
+   },
+   "top": {
+    "type": "jacket",
+    "color": "#3A3A40",
+    "inner": "#E8E8E8"
+   },
+   "bottom": {
+    "type": "pants",
+    "color": "#2E2E34"
+   },
+   "shoes": {
+    "color": "#1E1A1A",
+    "sole": "#141010"
+   },
+   "look": "Older scientist, silver slicked-back hair, dark suit over a white shirt."
+  }
+ ]
+}

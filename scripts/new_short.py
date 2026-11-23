@@ -3,6 +3,8 @@
   python scripts/vn.py new_short <work-dir> 3          → <work>/shorts/03/
   python scripts/vn.py new_short <work-dir> 3 --refresh  re-copy the engine + cast, keep script.json, shots.js, data, audio
 
+Copies the current engine (rig.js, hair.js, face.js, scene.js …), the cast, the series' location modules (src/sets/) and its
+props.js (src/props.js). --refresh re-copies them all into an existing short (never script.json, shots.js, data, audio).
 Then: write script.json → vn.py voice → write src/shots.js → vn.py build --preview → look → vn.py build → vn.py deliver.
 """
 import argparse, json, shutil, sys
@@ -34,7 +36,9 @@ def main():
     from common import episodes_root, safe_name
     LD = Path(meta['locations_dir']) if meta.get('locations_dir') else episodes_root(cfg) / '_Locatii' / safe_name(meta.get('series', 'Unknown series'))
     (P / 'src' / 'sets').mkdir(exist_ok=True)
-    for m in sorted(LD.glob('*.js')) if LD.exists() else []: shutil.copy2(m, P / 'src' / 'sets' / m.name)
+    for m in sorted(LD.glob('*.js')) if LD.exists() else []:
+        if m.name == 'props.js': shutil.copy2(m, P / 'src' / 'props.js')        # the series' shared props replace the default
+        else: shutil.copy2(m, P / 'src' / 'sets' / m.name)
     if not (P / 'script.json').exists(): (P / 'script.json').write_text(json.dumps(SKELETON, indent=1), encoding='utf-8')
     if not (P / 'post.json').exists():
         (P / 'post.json').write_text(json.dumps({"number": a.n, "title": "", "description": "", "hashtags": [], "score": 0, "score_reason": "", "covers": ""}, indent=1), encoding='utf-8')

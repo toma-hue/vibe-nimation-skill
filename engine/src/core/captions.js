@@ -59,3 +59,11 @@ export function drawCaptions(ctx, t, o = {}) {
   });
   ctx.restore();
 }
+
+/** the screen box the captions occupy at time t (null when none are showing) — used by the framing check */
+export function captionBox(t, o = {}) {
+  if (!groups) return null;
+  const g = groups.find((x) => t >= x.start && t < x.end); if (!g) return null;
+  const c = { ...cfg, ...o }, chars = g.reduce((n, w) => n + w.w.length + 1, 0), lines = chars > c.maxChars ? 2 : 1;
+  return [60, c.y - c.size * (0.95 + c.lineGap * (lines - 1)), W - 60, c.y + c.size * 0.3];
+}

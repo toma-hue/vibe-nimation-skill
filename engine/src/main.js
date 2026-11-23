@@ -2,7 +2,7 @@
 import { W, H, FPS } from './core/lib.js';
 import { finish } from './core/scene.js';
 import { loadTiming, T } from './core/timing.js';
-import { setupCaptions, drawCaptions } from './core/captions.js';
+import { setupCaptions, drawCaptions, captionBox } from './core/captions.js';
 import { buildShots } from './shots.js';
 
 const q = new URLSearchParams(location.search);
@@ -42,12 +42,18 @@ async function boot() {
 
 window.OP = {
   ready: false, duration: () => DURATION,
-  scenes: () => SHOTS.map((s, i) => ({ i, id: s.id, start: s.start, end: s.end, tech: s.note || '', title: s.note || '' })),
+  scenes: () => SHOTS.map((s, i) => ({ i, id: s.id, start: s.start, end: s.end, tech: s.note || '', title: s.note || '', allowOff: s.allowOff || [] })),
   errors: () => errors,
   cues: () => (SHOTS.cues || []).map((c) => ({ gain: 1, ...c })).sort((a, b) => a.t - b.t),
   music: () => SHOTS.music || null,
   frame(i, qq = 0.92) { render(i / FPS); return out.toDataURL('image/jpeg', qq); },
   bench(i) { const t0 = performance.now(); render(i / FPS); return performance.now() - t0; },
+  /** render frame i and return what is where: characters (box + face), marked props, the caption band */
+  probe(i) {
+    globalThis.__VN_PROBE = []; render(i / FPS); const items = globalThis.__VN_PROBE; globalThis.__VN_PROBE = null;
+    const sh = SHOTS[shotAt(i / FPS)];
+    return { items, cap: sh.captions === false ? null : captionBox(i / FPS, sh.captions || {}), W, H };
+  },
   sheet(times, cols = 4, scale = 0.25, qq = 0.85) {
     const w = Math.round(W * scale), h = Math.round(H * scale), rows = Math.ceil(times.length / cols);
     const c = document.createElement('canvas'); c.width = w * cols; c.height = (h + 22) * rows;
