@@ -4,6 +4,8 @@
   python scripts/vn.py locations <work-dir> --ids diner  only these
   python scripts/vn.py locations <work-dir> --new diner  start a module from reference/location-example.js
   python scripts/vn.py locations <work-dir> --props      start the series' props.js from the engine's default props
+  python scripts/vn.py locations <work-dir> --objects mike  the props sheet: riding, the bike, held props, every series
+                                                         prop × every view → _Obiecte.png (read it before shots use them)
 
 Folder: Vibe-nimation episodes/_Locatii/<Series>/
   <id>.js            the location module (reference/LOCATIONS.md) — reused by every episode of the series
@@ -22,7 +24,7 @@ def loc_dir(meta, cfg=None):
 
 
 def main():
-    ap = argparse.ArgumentParser(); ap.add_argument('work'); ap.add_argument('--ids'); ap.add_argument('--new'); ap.add_argument('--props', action='store_true')
+    ap = argparse.ArgumentParser(); ap.add_argument('work'); ap.add_argument('--ids'); ap.add_argument('--new'); ap.add_argument('--props', action='store_true'); ap.add_argument('--objects')
     a = ap.parse_args(); cfg = load_config(); W = Path(a.work); meta = episode_meta(W)
     if not meta.get('series'): sys.exit('episode.json has no "series" yet: write series/season/episode into it first')
     D = loc_dir(meta, cfg); (D / 'refs').mkdir(parents=True, exist_ok=True)
@@ -37,6 +39,14 @@ def main():
         f.write_text(src.replace("id: 'diner'", f"id: '{a.new}'").replace("series: 'Example'", f"series: {json.dumps(meta['series'])}"), encoding='utf-8')
         return print(f, '← rewrite it for this place (reference/LOCATIONS.md)')
     mods = sorted(m for m in D.glob('*.js') if m.name != 'props.js')
+    if a.objects:
+        R = copy_engine(W / 'locations_render')
+        if (D / 'props.js').exists(): shutil.copy2(D / 'props.js', R / 'src' / 'props.js')
+        cf = cast_dir(meta, cfg) / 'characters.json'
+        if cf.exists(): shutil.copy2(cf, R / 'data' / 'characters.json')
+        out = D / '_Obiecte.png'
+        r = subprocess.run([shutil.which('node'), 'tools/page.mjs', f'rigcheck.html?id={a.objects}&page=props', str(out)], cwd=R, env=node_env(cfg), capture_output=True, text=True)
+        return print(out if r.returncode == 0 else f'FAILED: {(r.stderr or r.stdout)[-600:]}')
     if not mods: sys.exit(f'no location modules in {D} yet: vn.py locations <work> --new <id>')
     R = copy_engine(W / 'locations_render'); (R / 'src' / 'sets').mkdir(exist_ok=True)
     for m in mods: shutil.copy2(m, R / 'src' / 'sets' / m.name)

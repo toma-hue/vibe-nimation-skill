@@ -218,14 +218,18 @@ function seg(o, out, bend, swing, L1, L2, side, turn, fwd = false) {
   return [e, w];
 }
 
-function drawLeg(ctx, S, c, side, lp, turn, t) {
+function drawLeg(ctx, S, c, side, lp, turn, t, sq = turn) {
   const bt = (S.bottom || {}).type || 'pants', p = clamp((Math.abs(turn) - 0.3) / 0.5);
-  const hipX = kx(side * 46 * (1 - p * 0.85), turn) + turn * 6 * (1 - p);
-  const hip = [hipX, -430];
+  const hipX = kx(side * 46 * (1 - p * 0.85), sq) + turn * 6 * (1 - p);
+  const hip = lp.root || [hipX, -430];
   const [out, swing, knee] = lp;
-  const kneeP = [hip[0] + 205 * (Math.sin(out) * side * (1 - p) + Math.sin(swing) * turn), hip[1] + 205 * Math.cos(swing) * Math.cos(out)];
-  const shinA = swing - knee;
-  const ank = [kneeP[0] + 195 * (Math.sin(out * 0.6) * side * (1 - p) + Math.sin(shinA) * turn), kneeP[1] + 195 * Math.cos(shinA)];
+  let kneeP, ank;
+  if (lp.pts) [kneeP, ank] = lp.pts;                        // IK (riding, reaching): joints already solved and projected
+  else {
+    kneeP = [hip[0] + 205 * (Math.sin(out) * side * (1 - p) + Math.sin(swing) * turn), hip[1] + 205 * Math.cos(swing) * Math.cos(out)];
+    const shinA = swing - knee;
+    ank = [kneeP[0] + 195 * (Math.sin(out * 0.6) * side * (1 - p) + Math.sin(shinA) * turn), kneeP[1] + 195 * Math.cos(shinA)];
+  }
   const baggy = bt === 'cargo' ? 1.12 : bt === 'jeans' ? 0.92 : 1;
   const legSkin = bt === 'shorts' || bt === 'skirt' || (S.top || {}).type === 'dress';
   // thigh
@@ -250,12 +254,12 @@ function drawLeg(ctx, S, c, side, lp, turn, t) {
   return ank;
 }
 
-function drawArm(ctx, S, c, side, ap, swing, turn, t) {
+function drawArm(ctx, S, c, side, ap, swing, turn, t, sq = turn) {
   const top = S.top || {}, sleeve = top.type === 'tshirt' || top.type === 'dress' && top.sleeves !== 'long' ? 'short' : top.type === 'tank' ? 'none' : top.sleeves || 'long';
   const sw = (S.build || {}).shoulders || 1;
   const p = clamp((Math.abs(turn) - 0.3) / 0.5);
-  const sh = [kx(side * 98 * sw * (1 - Math.abs(turn) * 0.15) * (1 - p * 0.95), turn) + turn * 8 * (1 - p) - p * 4, -682];
-  const [elbow, wrist] = seg(sh, ap[0], ap[1], swing || 0, 140, 128, side, turn, !!ap[2]);
+  const sh = ap.root || [kx(side * 98 * sw * (1 - Math.abs(turn) * 0.15) * (1 - p * 0.95), sq) + turn * 8 * (1 - p) - p * 4, -682];
+  const [elbow, wrist] = ap.pts || seg(sh, ap[0], ap[1], swing || 0, 140, 128, side, turn, !!ap[2]);
   const upCol = sleeve === 'none' ? c.skin : c.top, loCol = sleeve === 'long' ? c.top : c.skin;
   capsule(ctx, sh, elbow, sleeve === 'none' ? 40 : 58, upCol);
   capsule(ctx, elbow, wrist, sleeve === 'long' ? 50 : 36, loCol);
@@ -401,6 +405,63 @@ function drawHead3q(ctx, S, o) {
   }
 }
 
+// ---------- three-quarter from behind (back + 0.3 ≤ |turn| < 0.75): mirrored so the near side is local −x ----------
+function drawHeadBack3q(ctx, S, o) {
+  const c = o._c || palette(S), t = o.t || 0, wind = o.wind ?? 1, k = clamp((Math.abs(o.turn) - 0.3) / 0.45);
+  const F = faceParams(S), g = faceGeom(F), HP = hairParams(S), face = S.face || {};
+  const cx = -(14 + 14 * k), m = map3q(cx, k, g.W);           // the head's centre line moves AWAY from the near side
+  // the near cheek and the jaw corner peek out past the back of the head (they stop at the jaw: no chin from behind)
+  const ch = [[-g.W * 0.9, -860], [-g.cheekW - 2, -818], [-g.cheekW + 2, -792], [-g.jawW - 2, g.jawY - 8], [-g.jawW * 0.6, g.jawY + 6]].map(([x, y]) => [m(x), y]).concat([[-6, g.jawY - 4], [-6, -830]]);   // joined to the neck (x 0)
+  smooth(ctx, ch, true, 0.4); ink(ctx, c.skin);
+  shadeIn(ctx, () => smooth(ctx, ch, true, 0.4), () => { ctx.fillStyle = c.skinSh; ctx.fillRect(m(-g.W * 0.6), -900, 200, 260); });
+  if (face.beard === 'full') { smooth(ctx, [[m(-g.jawW) + 4, g.jawY - 30], [m(-g.jawW) - 2, g.jawY], [m(-g.jawW * 0.5), g.chinY + 10], [m(-g.W * 0.35), -770]], true, 0.4); ctx.fillStyle = c.hair; ctx.fill(); }
+  // near ear
+  const earX = m(-g.W) + 8 - F.ears.out * 6;
+  ctx.save(); ctx.translate(earX, -812); ctx.rotate(-F.ears.out * 0.3);
+  ctx.beginPath(); ctx.ellipse(0, 0, 12 * F.ears.size, 18 * F.ears.size, 0, 0, Math.PI * 2); ink(ctx, c.skin, 4); ctx.restore();
+  if ((S.accessories || []).some((a) => a.type === 'earrings')) { circle(ctx, earX, -792, 5); ink(ctx, '#E8C46A', 2); }
+  // the hair covers the back of the head but stops at the ear: less stretch on the near side than the face edge
+  const mh = (x) => (x < 0 ? cx + x * (1 + 0.12 * k) : cx + x * (1 - 0.32 * k));
+  if (HP) hairBackView(ctx, HP, c, { t, wind, flat: !!S._flatHair, map: mh });
+  else { ctx.beginPath(); ctx.ellipse(m(0), -842, (m(g.W + 18) - m(-g.W - 18)) / 2, 90, 0, 0, Math.PI * 2); ink(ctx, c.skin); }
+  for (const a of S.accessories || []) {
+    const col = a.color || '#333';
+    if (a.type === 'cap') {                                   // brim points forward = away, peeking out on the near side
+      smooth(ctx, [[m(-120), -858], [m(-70), -872], [m(-40), -858], [m(-100), -848]], true, 0.3); ink(ctx, shade(col, -0.25));
+      smooth(ctx, [[-92, -858], [-88, -914], [-34, -950], [34, -950], [88, -914], [92, -858], [0, -846]].map(([x, y]) => [m(x), y]), true, 0.42); ink(ctx, col);
+    } else if (a.type === 'beanie') {
+      smooth(ctx, [[-92, -850], [-88, -920], [-40, -965], [40, -965], [88, -920], [92, -850]].map(([x, y]) => [m(x), y]), true, 0.45); ink(ctx, col);
+      smooth(ctx, [[-94, -880], [94, -880], [94, -846], [-94, -846]].map(([x, y]) => [m(x), y]), true, 0.2); ink(ctx, shade(col, -0.2));
+    } else if (a.type === 'headband') { ctx.beginPath(); ctx.moveTo(m(-88), -872); ctx.quadraticCurveTo(m(0), -905, m(88), -872); ctx.strokeStyle = OL; ctx.lineWidth = 16; ctx.stroke(); ctx.strokeStyle = col; ctx.lineWidth = 10; ctx.stroke(); }
+    else if (a.type === 'hat') hatFront(ctx, col, a.band, m, true);
+  }
+}
+
+// ---------- reaching for exact points (riding, holding a bar): two-bone IK in 3D, projected into the view ----------
+// pose.ik = { L: [x, y, z], R: […], legL: […], legR: […] } in body units: x forward, y up (feet 0, hips 430, shoulders 682),
+// z to the character's right. L / legL = the limbs on screen-left in front view (the character's right side).
+function ik2(root, target, L1, L2, pole) {
+  const d = [target[0] - root[0], target[1] - root[1], target[2] - root[2]], dl = Math.hypot(...d) || 1, D = Math.min(dl, L1 + L2 - 0.5);
+  const u = d.map((v) => v / dl), a = (L1 * L1 + D * D - L2 * L2) / (2 * D), hh = Math.sqrt(Math.max(0, L1 * L1 - a * a));
+  const pd = pole[0] * u[0] + pole[1] * u[1] + pole[2] * u[2], pp = pole.map((v, i) => v - pd * u[i]), pl = Math.hypot(...pp) || 1;
+  const joint = root.map((v, i) => v + u[i] * a + pp[i] / pl * hh), end = root.map((v, i) => v + u[i] * D);
+  return [joint, end];
+}
+/** the view angle of a drawn (possibly mirrored) figure: 0 front, 90 profile (local facing +x), 180 back */
+export function viewAngle(turnLocal, back, bq) { return back ? (bq ? 180 + 90 * turnLocal : 180 - 90 * turnLocal) : 90 * clamp(turnLocal, -1, 1); }
+export function project(p, th) { const a = th * Math.PI / 180; return [p[0] * Math.sin(a) - p[2] * Math.cos(a), -p[1], p[0] * Math.cos(a) + p[2] * Math.sin(a)]; }
+function ikLimbs(S, pose, th) {
+  const sw = (S.build || {}).shoulders || 1, out = {};
+  for (const [key, side, isLeg] of [['L', -1, false], ['R', 1, false], ['legL', -1, true], ['legR', 1, true]]) {
+    const tgt = pose.ik[key]; if (!tgt) continue;
+    const root = isLeg ? [0, 430, -side * 46] : [0, 682, -side * 98 * sw];
+    const [j, e] = ik2(root, tgt, isLeg ? 205 : 140, isLeg ? 195 : 128, isLeg ? [1, 0.3, 0] : [-0.6, -0.3, -side * 0.6]);
+    const P = (q) => project(q, th);
+    out[key] = { root: P(root).slice(0, 2), pts: [P(j).slice(0, 2), P(e).slice(0, 2)] };
+  }
+  return out;
+}
+
 // ---------- profile (|turn| ≥ 0.75): drawn facing right; drawCharacter mirrors it for facing left ----------
 function drawHeadProfile(ctx, S, o) {
   const c = o._c || palette(S), e = typeof o.expr === 'string' ? EXPR[o.expr] : o.expr || EXPR.neutral, t = o.t || 0, wind = o.wind ?? 1;
@@ -524,28 +585,48 @@ export function drawCharacter(ctx, S, x, y, s, o = {}) {
   ctx.save(); ctx.translate(x, y); if (o.alpha != null) ctx.globalAlpha = o.alpha;
   probeCharacter(ctx, S, s * height, headK, o);
   if (o.shadow !== false) { ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.ellipse(0, 0, 120 * s, 18 * s, 0, 0, Math.PI * 2); ctx.fill(); }
-  const PROF = !back && Math.abs(turn) >= 0.75, TQ = !back && !PROF && Math.abs(turn) >= 0.3;
-  // turned views are drawn facing right; facing left = the same drawing mirrored
-  const mir = (PROF || TQ) && turn < 0;
+  // views: front · 3/4 (TQ) · profile (PROF, also when turned away that far) · back · 3/4 from behind (BQ)
+  const PROF = Math.abs(turn) >= 0.75, TQ = !back && !PROF && Math.abs(turn) >= 0.3, BQ = back && !PROF && Math.abs(turn) >= 0.3;
+  // turned views are drawn facing right; facing left = the same drawing mirrored (3/4 from behind: the other way)
+  const mir = ((PROF || TQ) && turn < 0) || (BQ && turn > 0);
   ctx.scale(s * height * ((o.flip ? -1 : 1) * (mir ? -1 : 1)), s * height);     // uniform: a kid is a smaller person, not a squashed one
   const turnD = mir ? -turn : turn;
   // keep the lower foot on the ground for sits/kneels/crouches
   const legY = (lp) => -430 + 205 * Math.cos(lp[1]) * Math.cos(lp[0]) + 195 * Math.cos(lp[1] - lp[2]);
-  const drop = -40 - Math.max(legY(pose.legL), legY(pose.legR));
+  const drop = pose.fixed || pose.ik ? 0 : -40 - Math.max(legY(pose.legL), legY(pose.legR));
   const br = Math.sin(t * 2.1) * 3, bob = -(pose.bob || 0);
   ctx.translate(0, drop + bob);
   if (o.lean) { ctx.translate(0, -430); ctx.rotate(o.lean); ctx.translate(0, 430); }
   // long hair hangs behind the body
   const HP = hairParams(S), longHair = isLong(HP);
-  const L = [pose.L[0] + Math.sin(t * 2.1) * 0.02, pose.L[1], pose.L[2]], R = [pose.R[0] + Math.sin(t * 2.1 + 1) * 0.02, pose.R[1], pose.R[2]];
-  const turnD0 = (PROF || TQ) && turn < 0 ? -turn : turn;
-  const farFirst = Math.abs(turnD0) > 0.3;               // the far arm goes behind the torso when turned
-  const farSide = turnD0 > 0 ? 1 : -1;
-  const arm = (side) => drawArm(ctx, S, c, side, side < 0 ? L : R, side < 0 ? pose.swingL : pose.swingR, turnD0, t);
+  // (3/4 from behind is drawn mirrored the other way, so the limbs that are on screen-left/right in the straight back
+  //  view must swap to stay on the same side of the body)
+  const sw = BQ ? (a, b) => [b, a] : (a, b) => [a, b];
+  const [pL, pR] = sw(pose.L, pose.R), [qL, qR] = sw(pose.legL, pose.legR), [swL, swR] = sw(pose.swingL, pose.swingR);
+  const L = [pL[0] + Math.sin(t * 2.1) * 0.02, pL[1], pL[2]], R = [pR[0] + Math.sin(t * 2.1 + 1) * 0.02, pR[1], pR[2]];
+  const legL = [...qL], legR = [...qR];
+  const turnD0 = mir ? -turn : turn;
+  // 3/4 from behind: squeezed on local +x (far), facing local −x (limb swings and toes go that way)
+  const tA = Math.abs(turn), limbTurn = BQ ? -tA : turnD0, sqTurn = BQ ? tA : turnD0;
+  // the view angle of this (possibly mirrored) drawing: 3D props (a bike) and IK limbs are projected with it
+  const th = PROF ? 90 : viewAngle(BQ ? tA : turnD0, back, BQ);
+  L.key = BQ ? 'R' : 'L'; R.key = BQ ? 'L' : 'R';         // which pose hand each drawn arm is (o.hold follows it)
+  if (o.before) o.before(ctx, th);                        // parts of a 3D prop farther than the body (bike: far wheel)
+  if (pose.ik) {                                          // riding / reaching: solve the limbs in 3D for this view
+    const S2 = ikLimbs(S, pose, th);
+    const keys = BQ ? [[L, 'R'], [R, 'L'], [legL, 'legR'], [legR, 'legL']] : [[L, 'L'], [R, 'R'], [legL, 'legL'], [legR, 'legR']];
+    for (const [arr, key] of keys) if (S2[key]) { arr.root = S2[key].root; arr.pts = S2[key].pts; }
+  }
+  const farFirst = Math.abs(turnD0) > 0.3 || BQ;          // the far arm goes behind the torso when turned
+  const farSide = BQ ? 1 : turnD0 > 0 ? 1 : -1;
+  // a held object is drawn right after its arm, at the hand: it is hidden exactly when the hand is
+  const held = (A, h) => { const f = o.hold && o.hold[A.key]; if (f) f(ctx, h.hand, Math.atan2(h.wrist[1] - h.elbow[1], h.wrist[0] - h.elbow[0]), { th, back, mir }); };
+  const arm = (side) => { const A = side < 0 ? L : R; held(A, drawArm(ctx, S, c, side, A, side < 0 ? swL : swR, limbTurn, t, sqTurn)); };
   const headBlock = () => {
     ctx.save(); ctx.translate(0, br);
     ctx.translate(0, -760); if (o.headTilt) ctx.rotate(o.headTilt); ctx.scale(headK, headK); ctx.translate(0, 760);
-    if (TQ) drawHead3q(ctx, S, { ...o, _c: c, turn: turnD, _longDone: longHair });
+    if (BQ) drawHeadBack3q(ctx, S, { ...o, _c: c, turn: turnD });
+    else if (TQ) drawHead3q(ctx, S, { ...o, _c: c, turn: turnD, _longDone: longHair });
     else drawHead(ctx, S, { ...o, _c: c, turn: turnD, back, _longDone: longHair && !back });
     ctx.restore();
   };
@@ -553,13 +634,15 @@ export function drawCharacter(ctx, S, x, y, s, o = {}) {
     const tp = Math.abs(turn), dim = { ...c, top: c.topSh, bottom: c.bottomSh, shoe: shade(c.shoe, -0.3), skin: c.skinSh, inner: c.innerSh };
     const head = () => { ctx.save(); ctx.translate(0, br - 760); if (o.headTilt) ctx.rotate(o.headTilt); ctx.scale(headK, headK); ctx.translate(0, 760); drawHeadProfile(ctx, S, { ...o, _c: c }); ctx.restore(); };
     // far side first (darker), then the body, then the near side
-    drawLeg(ctx, S, dim, -1, pose.legL, tp, t);
-    drawArm(ctx, S, dim, -1, L, pose.swingL, tp, t);
-    drawLeg(ctx, S, c, 1, pose.legR, tp, t);
+    drawLeg(ctx, S, dim, -1, legL, tp, t);
+    held(L, drawArm(ctx, S, dim, -1, L, pose.swingL, tp, t));
+    if (o.between) o.between(ctx, th);                            // e.g. a bike frame between the far and the near leg
+    drawLeg(ctx, S, c, 1, legR, tp, t);
     drawPelvisProfile(ctx, S, c);
     ctx.save(); ctx.translate(0, br * 0.4); drawTorsoProfile(ctx, S, c, t, wind); ctx.restore();
-    if (pose.over) { head(); drawArm(ctx, S, c, 1, R, pose.swingR, tp, t); }
-    else { drawArm(ctx, S, c, 1, R, pose.swingR, tp, t); head(); }
+    if (pose.over) { head(); held(R, drawArm(ctx, S, c, 1, R, pose.swingR, tp, t)); }
+    else { held(R, drawArm(ctx, S, c, 1, R, pose.swingR, tp, t)); head(); }
+    if (o.after) o.after(ctx, th);
     ctx.restore(); return;
   }
   if (longHair && !back) {                                                  // long hair hangs behind the body
@@ -567,19 +650,20 @@ export function drawCharacter(ctx, S, x, y, s, o = {}) {
     ctx.save(); ctx.translate(0, br - 760); if (o.headTilt) ctx.rotate(o.headTilt); ctx.scale(headK, headK); ctx.translate(0, 760);
     hairBehind(ctx, HP, c, { t, wind, map }); ctx.restore();
   }
-  if (back) { for (const side of [-1, 1]) drawLeg(ctx, S, c, side, side < 0 ? pose.legL : pose.legR, turnD, t); drawPelvis(ctx, S, c, turnD); }
-  else {
-    // the leg nearer the camera last
-    const order = turnD > 0.2 ? [1, -1] : turnD < -0.2 ? [-1, 1] : [-1, 1];
-    for (const side of order) drawLeg(ctx, S, c, side, side < 0 ? pose.legL : pose.legR, turnD, t);
-    drawPelvis(ctx, S, c, turnD);
-  }
-  if (back) for (const sd of [-1, 1]) if ((sd < 0 ? L : R)[1] <= -1) arm(sd);   // folded arms: in front of the body, so behind it from the back
+  // the leg nearer the camera last (3/4 from behind: local −x is near)
+  const order = BQ ? [1, -1] : back ? [-1, 1] : turnD > 0.2 ? [1, -1] : turnD < -0.2 ? [-1, 1] : [-1, 1];
+  for (const side of order) drawLeg(ctx, S, c, side, side < 0 ? legL : legR, limbTurn, t, sqTurn);
+  drawPelvis(ctx, S, c, sqTurn);
+  if (o.between) o.between(ctx, th);
+  // from behind, arms in front of the body (folded, holding a bar, reaching forward) are hidden behind it
+  const hidden = (A) => A[1] <= -1 || (A.pts && back);
+  if (back) for (const sd of (BQ ? [1, -1] : [-1, 1])) if (hidden(sd < 0 ? L : R) || (BQ && sd === 1)) arm(sd);
   if (farFirst && !back) arm(farSide);
-  ctx.save(); ctx.translate(0, br * 0.4); drawTorso(ctx, S, c, turnD, t, wind, back); ctx.restore();
-  if (back) { for (const sd of [-1, 1]) if ((sd < 0 ? L : R)[1] > -1) arm(sd); headBlock(); }
+  ctx.save(); ctx.translate(0, br * 0.4); drawTorso(ctx, S, c, sqTurn, t, wind, back); ctx.restore();
+  if (back) { for (const sd of (BQ ? [-1] : [-1, 1])) if (!hidden(sd < 0 ? L : R)) arm(sd); headBlock(); }
   else if (pose.over) { headBlock(); if (!farFirst) arm(farSide); arm(-farSide); }
   else { if (!farFirst) arm(farSide); arm(-farSide); headBlock(); }
+  if (o.after) o.after(ctx, th);                          // parts nearer than the body (bike: front wheel, handlebar)
   ctx.restore();
 }
 

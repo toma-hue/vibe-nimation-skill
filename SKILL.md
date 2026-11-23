@@ -81,7 +81,10 @@ Follow `reference/LOCATIONS.md`: for every place the shorts use, pull stills (`-
 copy the stills to `_Locatii/<Series>/refs/`, write the module (`vn.py locations "<work>" --new <id>`, then rewrite it),
 and render `vn.py locations "<work>"` (after a fix: `--ids <id>`, only that sheet). Objects the series keeps using (a
 bike, a phone, a walkie, a creature) go in the shared `_Locatii/<Series>/props.js` (`vn.py locations "<work>" --props`
-starts it from the engine's default props); every short gets a copy. **Open every location sheet** and compare the vector plate with the still side
+starts it from the engine's default props); every short gets a copy. Then render **`vn.py locations "<work>" --objects <id>`**
+→ `_Obiecte.png` (riding a bike, the bike, held props and every series prop × all 8 views) and check that each object
+reads right from every side — front wheel in front of the legs when riding toward the camera, held things hidden by the
+hand from behind; a vehicle or anything ridden uses `rideBike` / a 3D prop (reference/SHOTS.md → Props). **Open every location sheet** and compare the vector plate with the still side
 by side (layout, big shapes, colours, light, signature details, scale, no black in the 9:16 frames); fix until it is
 recognisably the same place. Reuse existing modules from earlier episodes.
 

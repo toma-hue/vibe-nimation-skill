@@ -111,7 +111,7 @@ Extras (a cop, a nurse) still get their own hair and face numbers — vary them;
 ## Check (every time `cast` runs)
 Per iteration open `_verificare/_review.png` (the line-up + one row of heads per changed character, all views) and,
 when faces changed, `_verificare/_Fete.png`. **Before the stop, once, open every `<Name>.png`, `_capete` and `_corp`**:
-- **Hair in every view** (front, 3/4 both sides, profile both sides, back): covered as in the stills — no bald temples
+- **Hair in every view** (front, 3/4 both sides, profile both sides, back, 3/4 from behind both sides): covered as in the stills — no bald temples
   or sides, the hairline comes down the temple, sideburns in front of the ear (short styles), long hair behind the
   ear, curls don't cover the eyes or glasses, a buzz is a thin cap (no side volume or block at the back).
 - **No outline inside the hair**: fringes and temple locks have ink only on their hanging lower edge — no line across
@@ -120,7 +120,9 @@ when faces changed, `_verificare/_Fete.png`. **Before the stop, once, open every
   3/4; a wide-brim hat level, its crown pinched); glasses on the eyes with the arm to the ear in profile.
 - **Expressions**: each of the 8 reads as its name in all five face views; talking mouths open.
 - **Poses × views**: limbs attached, hands at the ends of the arms, both feet on the floor line, walks/runs read in
-  profile, folded arms hidden from behind, nothing floating or cut.
+  profile, folded arms hidden from behind, nothing floating or cut. **From behind** (SPATE, 3/4 SPATE): the back of
+  the head is hair (no face showing through), the neck and the near ear/cheek show in 3/4, the arm that points or waves
+  goes the right way, the near leg is drawn over the far one.
 - **Distinct people**: no two main characters have the same hair silhouette (line-up) or the same face read
   (`_Fete.png`: hair flattened to a silhouette — every face must still be told apart; kids and adult women especially).
 - **Identity**: each head side by side with a still of that person — hair shape and colour, face shape, eyes, nose,

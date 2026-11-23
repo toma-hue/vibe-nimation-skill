@@ -195,15 +195,16 @@ export function hairBackView(ctx, p, c, o = {}) {
   if (!p) return;
   const t = o.t || 0, wind = o.wind ?? 1;
   if (p.extra === 'ponytail') { const sw = Math.sin(t * 2.2) * 6 * wind; smooth(ctx, [[-26, -880], [26, -880], [30 + sw, -760], [12 + sw * 1.5, -660], [-12 + sw * 1.5, -660], [-30 + sw, -760]], true, 0.5); }
+  const m = o.map || ident;                                   // 3/4 from behind: squeezed on the far side
   let pts = massPts(p, true);
-  pts = textured(pts, p.texture, p.amp, p.seed + 9, true, 1);
+  pts = textured(pts, p.texture, p.amp, p.seed + 9, true, 1).map(([x, y]) => [m(x), y]);
   smooth(ctx, pts, true, kOf(p.texture)); ink(ctx, c.hair);
   if (p.extra === 'ponytail') { const sw = Math.sin(t * 2.2) * 6 * wind; smooth(ctx, [[-24, -890], [24, -890], [28 + sw, -760], [10 + sw * 1.5, -650], [-10 + sw * 1.5, -650], [-28 + sw, -760]], true, 0.5); ink(ctx, c.hair); }
   if (p.extra === 'bun') { circle(ctx, 0, -940 - p.top, 40); ink(ctx, c.hair); }
   if (!o.flat && !p.buzz) {
     ctx.strokeStyle = c.hairHi; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
     const bot = Math.min(p.length + 30, -800);
-    for (let i = 0; i < 5; i++) { const x = -44 + i * 22; ctx.beginPath(); ctx.moveTo(x * 0.8, -910 - p.top * 0.5); ctx.quadraticCurveTo(x, -850, x * 1.1, bot); ctx.stroke(); }
+    for (let i = 0; i < 5; i++) { const x = -44 + i * 22; ctx.beginPath(); ctx.moveTo(m(x * 0.8), -910 - p.top * 0.5); ctx.quadraticCurveTo(m(x), -850, m(x * 1.1), bot); ctx.stroke(); }
   }
 }
 
