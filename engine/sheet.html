@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ro"><head><meta charset="utf-8"><title>Fișă personaj</title>
+<style>html,body{margin:0;background:#1A1519}canvas{display:block;max-width:100%;height:auto}</style></head>
+<body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script type="module">
+// Character sheet for one spec: sheet.html?id=mike  (reads data/characters.json)
+// cast mode: sheet.html?cast=1 — every character side by side
+import { drawCharacter, drawHead, EXPR, palette, walkPose } from './src/core/rig.js';
+import { shade } from './src/core/lib.js';
+const q = new URLSearchParams(location.search), cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const BG = '#1A1519', PANEL = '#2A2229', PANEL2 = '#352B34', LABEL = '#6E1B2E', TXT = '#F3E9EC', DIM = '#B7A9B0';
+const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); };
+function panel(x, y, w, h, title) {
+  ctx.fillStyle = PANEL; rr(x, y, w, h, 14); ctx.fill();
+  ctx.font = '700 24px Inter, Arial, sans-serif'; const tw = ctx.measureText(title).width;
+  ctx.fillStyle = LABEL; rr(x + 14, y - 16, tw + 28, 36, 8); ctx.fill(); ctx.fillStyle = TXT; ctx.fillText(title, x + 28, y + 10);
+}
+function label(text, cx, y) { ctx.font = '700 17px Inter, Arial'; const w = ctx.measureText(text).width + 24; ctx.fillStyle = LABEL; rr(cx - w / 2, y, w, 30, 6); ctx.fill(); ctx.fillStyle = TXT; ctx.textAlign = 'center'; ctx.fillText(text, cx, y + 21); ctx.textAlign = 'left'; }
+function stage(x, y, w, h) { const g = ctx.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, '#3B3550'); g.addColorStop(1, '#2A2433'); ctx.fillStyle = g; ctx.fillRect(x, y, w, h); }
+
+function sheet(S) {
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, 1920, 1080);
+  const h = (S.build || {}).height || 1, k = 0.5 / Math.max(1, h);
+  panel(30, 40, 860, 600, `${S.name.toUpperCase()} — TURNAROUND`);
+  ctx.save(); rr(40, 60, 840, 570, 10); ctx.clip(); stage(40, 60, 840, 570);
+  [['FAȚĂ', {}], ['3/4', { turn: 0.6 }], ['SPATE', { back: true }], ['PROFIL', { turn: 1 }]].forEach(([n, o], i) => {
+    drawCharacter(ctx, S, 145 + i * 210, 592, k, { ...o, t: 0.4, wind: 0 });
+  });
+  ctx.restore();
+  ['FAȚĂ', '3/4', 'SPATE', 'PROFIL'].forEach((s, i) => label(s, 145 + i * 210, 600));
+  panel(920, 40, 970, 600, 'EXPRESII');
+  const ex = ['neutral', 'happy', 'angry', 'shocked', 'sad', 'scared'], names = ['NEUTRU', 'FERICIT', 'FURIOS', 'ȘOCAT', 'TRIST', 'SPERIAT'];
+  ex.forEach((e, i) => {
+    const cx = 1080 + (i % 3) * 315, cy = 110 + Math.floor(i / 3) * 268;
+    ctx.save(); ctx.fillStyle = PANEL2; rr(cx - 150, cy - 50, 300, 245, 10); ctx.fill(); ctx.clip();
+    ctx.translate(cx, cy + 75); ctx.scale(0.9, 0.9); ctx.translate(0, 830); drawHead(ctx, S, { expr: EXPR[e], t: 0, wind: 0 }); ctx.restore();
+    label(names[i], cx, cy + 160);
+  });
+  panel(30, 680, 1150, 370, 'POZE (RIGGING)');
+  ctx.save(); rr(40, 700, 1130, 340, 10); ctx.clip(); stage(40, 700, 1130, 340);
+  [['idle', 0], ['point', 0], ['crossed', 0], ['handsOnHead', 0], ['cheer', 0], ['walk', 1], ['run', -1]].forEach(([p, turn], i) => drawCharacter(ctx, S, 120 + i * 158, 1020, 0.3, { pose: p === 'walk' ? walkPose(0.15) : p === 'run' ? walkPose(0.3, true) : p, turn, t: 0, wind: 0, expr: p === 'handsOnHead' ? 'shocked' : p === 'cheer' ? 'laugh' : p === 'run' ? 'determined' : 'neutral' }));
+  ctx.restore();
+  panel(1220, 680, 670, 370, 'PALETĂ · DESCRIERE');
+  const c = palette(S);
+  const sw = [[c.skin, 'Piele'], [c.hair, 'Păr'], [c.top, 'Sus'], [c.inner, 'Interior'], [c.bottom, 'Jos'], [c.shoe, 'Pantofi']];
+  sw.forEach(([col, n], i) => {
+    const x = 1250 + i * 104, y = 715; ctx.fillStyle = col; rr(x, y, 90, 70, 8); ctx.fill(); ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = TXT; ctx.font = '600 15px Inter, Arial'; ctx.fillText(n, x, y + 90); ctx.fillStyle = '#9C8C94'; ctx.font = '13px monospace'; ctx.fillText(col, x, y + 108);
+  });
+  ctx.fillStyle = DIM; ctx.font = '17px Inter, Arial'; wrap(S.look || S.notes || '', 1250, 860, 610, 24);
+  window.DONE = true;
+}
+function wrap(text, x, y, w, lh) { let line = ''; for (const word of text.split(' ')) { const t = line + word + ' '; if (ctx.measureText(t).width > w && line) { ctx.fillText(line, x, y); line = word + ' '; y += lh; } else line = t; } ctx.fillText(line, x, y); }
+
+function cast(list) {
+  const n = list.length, w = Math.max(1920, n * 260), hgt = 1080; cv.width = w; cv.height = hgt;
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, w, hgt); stage(0, 120, w, 860);
+  ctx.fillStyle = TXT; ctx.font = '700 40px Inter, Arial'; ctx.fillText('DISTRIBUȚIE', 40, 75);
+  list.forEach((S, i) => { const x = w / (n + 1) * (i + 1); drawCharacter(ctx, S, x, 930, 0.78 / Math.max(1, (S.build || {}).height || 1), { t: 0, wind: 0, turn: 0.15 * (i % 2 ? -1 : 1) }); label(S.name, x, 980); });
+  window.DONE = true;
+}
+function threeq(list) {
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, 1920, 1080); stage(0, 0, 1920, 1080);
+  list.slice(0, 4).forEach((S, i) => {
+    const x = 240 + i * 480, tn = i % 2 ? -0.55 : 0.55;
+    ctx.save(); ctx.beginPath(); ctx.rect(x - 230, 20, 460, 520); ctx.clip();
+    const hk = (S.build || {}).height || 1;
+    drawCharacter(ctx, S, x, 20 + 1840 / hk * 0 + 1840 - (1 - hk) * 0, 1.9, { turn: tn, t: 0, wind: 0, expr: ['neutral', 'angry', 'happy', 'shocked'][i], shadow: false }); ctx.restore();
+    drawCharacter(ctx, S, x, 1040, 0.5, { turn: tn, t: 0, wind: 0 });
+    label(S.name, x, 548);
+  });
+  window.DONE = true;
+}
+function profiles(list) {
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, 1920, 1080); stage(0, 0, 1920, 1080);
+  list.slice(0, 4).forEach((S, i) => {
+    const x = 240 + i * 480;
+    ctx.save(); ctx.beginPath(); ctx.rect(x - 230, 20, 460, 520); ctx.clip();
+    drawCharacter(ctx, S, x - 10, 20 + 1840, 1.9, { turn: i % 2 ? -1 : 1, t: 0, wind: 0, expr: ['neutral', 'angry', 'happy', 'shocked'][i], shadow: false }); ctx.restore();
+    drawCharacter(ctx, S, x, 1040, 0.5, { turn: i % 2 ? -1 : 1, t: 0, wind: 0, pose: i === 1 ? walkPose(0.2) : i === 2 ? 'point' : 'idle' });
+    label(S.name, x, 548);
+  });
+  window.DONE = true;
+}
+(async () => {
+  for (const [fam, file] of [['Inter', 'Inter.ttf']]) { const f = new FontFace(fam, `url(fonts/${file})`); await f.load(); document.fonts.add(f); }
+  const data = await (await fetch(q.get('file') || 'data/characters.json')).json();
+  const list = data.characters || data;
+  if (q.has('tq')) threeq(list); else if (q.has('profile')) profiles(list); else if (q.has('cast')) cast(list); else sheet(list.find((c) => c.id === q.get('id')) || list[0]);
+})().catch((e) => { document.body.insertAdjacentHTML('beforeend', `<pre style="color:#f88">${e.stack}</pre>`); window.DONE = 'error: ' + e.message; });
+</script>
+</body></html>
