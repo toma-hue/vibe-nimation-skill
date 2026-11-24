@@ -43,6 +43,15 @@ Pune episodul în `D:\Vibe-nimation\Episoade\`, deschide Claude Code în `D:\Vib
 Claude analizează episodul și se oprește ca să-ți arate serialul detectat, fișele personajelor și lista de
 short-uri propuse, fiecare cu notă. După ce aprobi, le face pe rând.
 
+## Consum de credite Claude Code
+Doar conversația cu Claude consumă credite (vocea, randarea, muzica rulează local, gratuit). Recomandări: sesiunea
+principală pe **Sonnet** (`/model sonnet`); Opus doar pentru analiza narativă și reparațiile de rig, lansate de skill ca
+sub-agenți; câte 2–3 short-uri per sesiune nouă (starea e în `bible.md`). Ca să vezi unde s-au dus creditele:
+
+```bash
+python scripts/usage_report.py
+```
+
 ## Unde ajung fișierele
 ```
 D:\Vibe-nimation\

@@ -19,7 +19,43 @@ The engine copy in every short is self-contained: `index.html` (player), `src/ma
   {"text": "Will, don't go out there!", "emotion": 0.9, "mime": "mike", "gap": 0.35}]}
 ```
 
-## shots.js — the API
+## Storyboard — the default way to write shots.js (one line per beat)
+`board(T, opts, beats)` builds every shot for you: the set, the characters at the right scale, the camera move, expression
+changes, FX and sound cues, cut on the narration. A beat is ~150 characters instead of a 20-line `draw()` — write these.
+```js
+import { board } from './core/board.js';
+import * as diner from './sets/diner.js';
+export function buildShots(T) {
+  const S = board(T, { sets: { diner }, time: 'night' }, [
+    { line: 0, shot: 'wide',   set: 'diner', who: [{ id: 'mike', x: 330 }, { id: 'will', x: 700 }], cam: 'push' },
+    { line: 1, shot: 'close',  set: 'diner', who: 'mike', expr: ['neutral', 'angry@furious'], fx: ['hit@furious'] },
+    { line: 2, shot: 'xclose', set: 'void', void: ['#1A0610', '#7A1028'], who: 'will', expr: 'shout', fx: ['speed', 'pulse'], tint: 'rgba(160,20,40,0.35)' },
+    { line: 3, shot: 'ots',    set: 'diner', who: ['will', 'mike'] },
+    { line: 4, shot: 'medium', set: 'diner', who: [{ id: 'mike', pose: 'point', hand: { R: 'gun' }, reach: { R: 'temple' } }, 'will'], fx: ['fadeOut'] },
+  ]);
+  S.music = { mood: 'tension', bpm: 76 };  return S;      // S.cues is filled by board()
+}
+```
+- `line` = the script line the shot starts on (cut 0.15 s before it; `at: seconds` for an exact start). `shot`: `wide`
+  (full body, true scale via `placeIn` in a location module) · `medium` (waist up; two people → `twoShot`) · `close` ·
+  `xclose` · `ots` (`who[0]` speaks, standing on the floor at true scale; `who[1]` seen from behind, big, low-left).
+- `set`: a module id from `opts.sets` (location of the episode) · generic `sky city rooftop street forest hallway room` ·
+  `void` (+ `void: [c1, c2]`). `time`: day sunset dusk night overcast storm. `blur` overrides the depth of field.
+- `who`: `'id'` or `{ id, x, y, turn, back, pose, expr, look, headTilt, lean, hold, hand, reach, walk: [x0, x1] }` or an
+  array. Several people are spread and turned toward each other by default. `expr`: `'angry'` or
+  `['neutral', 'angry@furious']` — a change starts 0.2 s before the word. The beat's mimed line (`"mime"` in the script)
+  moves that character's mouth automatically.
+- `cam`: `push pull panL panR drift low high still` or `{ from: {x, zoom, rot, cy}, to: {…} }`. Default push-in.
+- `fx`: `hit@word` (flash + shake + hit sound) · `flash@word` · `shake@word` · `speed` · `pulse` · `bars` · `fadeIn` ·
+  `fadeOut`. `sound`: `boom@word`, `hit@+0.3` (`+s` = seconds after the shot starts), `riser`, `whoosh`, `thunder` …
+  A whoosh is added on every cut (`noWhoosh: true` to skip). `tint`, `captions`, `allowOff`, `allowSmall` as in a shot.
+- `custom: (c, lt, sh, t, h) => {…}` — any hand-written shot (the old API below; `h` carries `scene, camAt, L, placeIn,
+  drawCharacter, exprAt, walkPose, G (generic sets), mod`). Props, inserts and special effects live there.
+- `opts.scale` = actor scale for generic-set wide shots (default 0.85). Inside a location module the scale comes from
+  `meta.scale`. **Hands/arms/fingers are never drawn in a beat or a custom shot — gestures are `pose`/`hand`/`reach`/`hold`.**
+- `word@` falls back silently to the line start when the word is not in `data/words.txt`: spell it as it is voiced.
+
+## shots.js — the lower-level API (for `custom` shots and old shorts)
 ```js
 import { key, ease, clamp, inv, lerp } from './core/lib.js';
 import { scene, camAt, shakeAt, L, flash, speedLines, bars, pulse, fade, wide, medium, closeUp, extremeCloseUp, twoShot, focus, mark } from './core/scene.js';
@@ -70,7 +106,7 @@ per shot, any character off-frame, any face cut by the edge or under the caption
 or under the captions. Props from props.js mark themselves; mark your own important objects with
 `mark(c, 'name', x0, y0, x1, y1)` where you draw them. A deliberate exit / partial figure: `allowOff: ['Mike Wheeler']`
 on the shot. Faces too low for the captions: raise `faceY`, or move the captions for that shot (`captions: {y: 560}`).
-Manual scale guide (if you must): wide 0.5–0.7 (feet ~1700) · medium 1.5 (feet ~2500) · close-up 2.75 (feet ~3150) · extreme 3.6 (feet ~3900) — for an adult; divide by height × headSize for kids.
+Inside a location module use `placeIn(meta, S, {x, y})` (true size at that depth, kids included) and never pick a scale by eye — `check` flags mismatched heights, objects off their real size and tiny figures. Manual scale guide (if you must, no location): wide 0.5–0.7 (feet ~1700) · medium 1.5 (feet ~2500) · close-up 2.75 (feet ~3150) · extreme 3.6 (feet ~3900) — for an adult; divide by height × headSize for kids.
 Moving a character: `x = lerp(x0, x1, ease.inOut(clamp(lt / d)))`; entering/exiting frame = start/end off-screen.
 
 **Props** — `import { bike, rideBike, held, wallPhone, walkie, flashlight, creature } from './props.js'` (the series' own

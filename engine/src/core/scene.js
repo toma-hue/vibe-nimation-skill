@@ -99,10 +99,11 @@ export function focus(wx, wy, f, o = {}) {
   return { x: (wx - W / 2 - (sx - W / 2) / z) / ff, y: (wy - 960 - (sy - H / 2) / z) / ff, zoom, cy: 960, rot: o.rot ?? 0 };
 }
 
+/** o.m = the object's REAL height in metres (door 2.05, dresser 0.9 …): `check` compares it with the characters' scale. */
 /** register an important prop's box (in the current drawing coordinates) for the framing check — call it right where
  *  you draw the prop: mark(c, 'wall phone', x0, y0, x1, y1). Characters register themselves. */
-export function mark(ctx, name, x0, y0, x1, y1) {
+export function mark(ctx, name, x0, y0, x1, y1, o = {}) {
   const R = globalThis.__VN_PROBE; if (!R || !ctx.canvas || ctx.canvas.id !== 'out') return;
   const M = ctx.getTransform(), ps = [[x0, y0], [x1, y0], [x0, y1], [x1, y1]].map(([x, y]) => M.transformPoint({ x, y }));
-  R.push({ kind: 'prop', name, box: [Math.min(...ps.map((p) => p.x)), Math.min(...ps.map((p) => p.y)), Math.max(...ps.map((p) => p.x)), Math.max(...ps.map((p) => p.y))] });
+  R.push({ kind: 'prop', name, m: o.m, box: [Math.min(...ps.map((p) => p.x)), Math.min(...ps.map((p) => p.y)), Math.max(...ps.map((p) => p.x)), Math.max(...ps.map((p) => p.y))] });
 }

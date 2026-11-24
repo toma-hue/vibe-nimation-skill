@@ -42,7 +42,7 @@ async function boot() {
 
 window.OP = {
   ready: false, duration: () => DURATION,
-  scenes: () => SHOTS.map((s, i) => ({ i, id: s.id, start: s.start, end: s.end, tech: s.note || '', title: s.note || '', allowOff: s.allowOff || [] })),
+  scenes: () => SHOTS.map((s, i) => ({ i, id: s.id, start: s.start, end: s.end, tech: s.note || '', title: s.note || '', allowOff: s.allowOff || [], allowSmall: !!s.allowSmall })),
   errors: () => errors,
   cues: () => (SHOTS.cues || []).map((c) => ({ gain: 1, ...c })).sort((a, b) => a.t - b.t),
   music: () => SHOTS.music || null,

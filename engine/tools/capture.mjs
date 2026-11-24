@@ -82,6 +82,37 @@ const jpg = (d) => Buffer.from(d.slice(d.indexOf(',') + 1), 'base64');
 const srv = await serve(); const port = srv.address().port;
 let exit = 0;
 let DUR = 0;
+
+// ---- scale check: people and marked objects keep their real-world proportions (reference/LOCATIONS.md → Scale) ----
+// A character's on-screen height = 960 · s · build.height · (1 + 0.083·(headSize−1)) px, an adult (1.0) is 1.75 m.
+// (1) two characters at the same depth must have the same implied actor scale s (heights true to build.height);
+// (2) a prop marked with mark(…, {m: metres}) must be the size those metres have at the nearest character's depth.
+let CASTMAP = null;
+function castOf(name) {
+  if (!CASTMAP) { CASTMAP = new Map(); try { const d = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/characters.json'), 'utf8')); for (const c of d.characters || d) CASTMAP.set(c.name || c.id, c); } catch {} }
+  return CASTMAP.get(name);
+}
+function scaleCheck(items, H, allowSmall, add) {
+  const chars = items.filter((i) => i.kind === 'character').map((i) => {
+    const c = castOf(i.name), b = (c && c.build) || {}, h = b.height || 1, hk = b.headSize || 1, hpx = i.box[3] - i.box[1];
+    const fig = 960 + 80 * (hk - 1); return { ...i, h, feet: i.box[3], hpx, s: hpx / fig / h, ppm: hpx / (1.75 * h * (fig / 960)) };
+  }).filter((c) => c.hpx > 20);
+  for (let a = 0; a < chars.length; a++) for (let b = a + 1; b < chars.length; b++) {
+    const A = chars[a], B = chars[b];
+    if (Math.abs(A.feet - B.feet) > 140) continue;                       // different depths: perspective, not an error
+    const r = A.s / B.s;
+    if (r > 1.18 || r < 1 / 1.18) add(`scale-pair: ${A.name}|${B.name}`, `scale mismatch at the same depth: ${A.name} is drawn ${r > 1 ? (r).toFixed(2) + '× bigger' : (1 / r).toFixed(2) + '× smaller'} than their build.height says next to ${B.name} (use wide()/placeIn()/twoShot() so heights stay true)`);
+  }
+  if (!chars.length) return;
+  // (3) a full-body figure must not be tiny in the frame: kids shrunk to nothing next to the furniture was the bug —
+  //     frame tighter (camera zoom / crop the room) instead of drawing people small. Deliberate far shots: allowSmall: true.
+  if (!allowSmall) for (const c of chars) if (c.feet < H && c.hpx / H < 0.28) add(`tiny: ${c.name}`, `tiny figure: ${c.name} is only ${Math.round(100 * c.hpx / H)}% of the frame height — frame tighter (placeIn with a bigger meta.scale, camera zoom) or mark the shot allowSmall: true if it is a deliberate far shot`);
+  for (const p of items.filter((i) => i.kind === 'prop' && i.m)) {
+    const base = p.box[3], ref = chars.slice().sort((x, y) => Math.abs(x.feet - base) - Math.abs(y.feet - base))[0];
+    const exp = p.m * ref.ppm, got = p.box[3] - p.box[1], r = got / exp, near = Math.abs(ref.feet - base) < 120, lo = near ? 0.78 : 0.55, hi = near ? 1.28 : 1.8;
+    if (r < lo || r > hi) add(`scale-prop: ${p.name}`, `scale: ${p.name} (${p.m} m) is ${r.toFixed(2)}× the size it should have next to ${ref.name} (${Math.round(got)} px, expected ~${Math.round(exp)} px) — draw it with units(meta).h(metres, baseY)`);
+  }
+}
 try {
   if (mode === 'sheet' || mode === 'scenes') {
     const [out, list, cols = '4', scale = '0.25'] = rest;
@@ -158,6 +189,7 @@ try {
       let samples = 0;
       for (let f = f0; f <= f1; f += fstep) {
         const P = await w.evalv(`OP.probe(${f})`); samples++;
+        scaleCheck(P.items, P.H, !!s.allowSmall, (k, msg) => { const e = warn.get(k) || { n: 0, t: f / FPS, msg }; e.n++; warn.set(k, e); });
         for (const it of P.items) {
           if ((s.allowOff || []).includes(it.name)) continue;
           const add = (k) => { const e = warn.get(k) || { n: 0, t: f / FPS }; e.n++; warn.set(k, e); };
@@ -173,7 +205,7 @@ try {
           }
         }
       }
-      for (const [k, e] of warn) { console.log(`  ⚠ ${k}  (${e.n}/${samples} samples, first at ${e.t.toFixed(2)}s)`); framing++; }
+      for (const [k, e] of warn) { console.log(`  ⚠ ${e.msg || k}  (${e.n}/${samples} samples, first at ${e.t.toFixed(2)}s)`); framing++; }
     }
     if (framing) console.log(`FRAMING WARNINGS: ${framing} — fix them (shot helpers closeUp/medium/wide, focus(), captions:{y}) or list deliberate exits in the shot's allowOff: [names]`);
     else console.log('framing ok: no character, face or marked prop off-frame or under the captions');

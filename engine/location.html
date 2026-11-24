@@ -10,6 +10,7 @@
 import { W, H } from './src/core/lib.js';
 import { scene, camAt, L, finish } from './src/core/scene.js';
 import { drawCharacter } from './src/core/rig.js';
+import { ruler, actorScale } from './src/core/scale.js';
 const q = new URLSearchParams(location.search), cv = document.getElementById('c'), ctx = cv.getContext('2d');
 const BG = '#1A1519', PANEL = '#2A2229', LABEL = '#6E1B2E', TXT = '#F3E9EC', DIM = '#B7A9B0';
 const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); };
@@ -21,6 +22,7 @@ function plate(mod, o, dx, dy, dw, dh, win) {
   ctx.save(); rr(dx, dy, dw, dh, 8); ctx.clip();
   const k = dw / win.w; ctx.translate(dx, dy); ctx.scale(k, k); ctx.translate(-win.x, -win.y);
   for (const ly of [...mod.layers(o), ...(mod.front ? mod.front(o) : [])]) ly.draw(ctx, 0.5);
+  if (mod.meta && mod.meta.scale) { ruler(ctx, mod.meta, win.x + 90, mod.meta.floor ?? 1700, 'RIGLĂ'); }   // metres at the floor line: a 2.05 m door must reach ~2 m
   ctx.restore();
 }
 /** one 9:16 short frame of the set, scaled into (dx, dy, dw) */
@@ -53,14 +55,15 @@ function frame(mod, o, cam, actor, dx, dy, dw) {
   label('VECTORIAL (același cadru)', 50, 578);
   // right: three short frames
   const fw = 300, fy = 150, xs = [970, 1280, 1590];
-  const actor = (scale, y, x = 540, turn = 0.3, expr = 'neutral') => (c) => who && drawCharacter(c, who, x, y, scale, { t: 0.5, turn, expr, wind: 0 });
-  frame(mod, o, { ...camAt(0, [[0, { x: m.camX ?? 0, zoom: 1, cy: m.camY ?? 960 }]]) }, actor(0.62, floor), xs[0], fy, fw);
-  frame(mod, o, { ...camAt(0, [[0, { x: (m.camX ?? 0) + (m.pan ?? 320), zoom: 1.12, cy: m.camY ?? 960 }]]) }, actor(0.62, floor, 540 + (m.pan ?? 320), -0.5), xs[1], fy, fw);
+  const sc = m.scale ?? 0.62, actor = (scale, y, x = 540, turn = 0.3, expr = 'neutral') => (c) => who && drawCharacter(c, who, x, y, scale, { t: 0.5, turn, expr, wind: 0 });
+  frame(mod, o, { ...camAt(0, [[0, { x: m.camX ?? 0, zoom: 1, cy: m.camY ?? 960 }]]) }, actor(sc, floor), xs[0], fy, fw);
+  frame(mod, o, { ...camAt(0, [[0, { x: (m.camX ?? 0) + (m.pan ?? 320), zoom: 1.12, cy: m.camY ?? 960 }]]) }, actor(sc, floor, 540 + (m.pan ?? 320), -0.5), xs[1], fy, fw);
   frame(mod, o, { ...camAt(0, [[0, { x: m.camX ?? 0, zoom: 1, cy: m.camY ?? 960 }]]), blur: 6, af: 1 }, actor(2.7, 3150, 540, 0.4, 'suspicious'), xs[2], fy, fw);
   ['LARG', 'PANORAMARE', 'PRIM-PLAN'].forEach((s, i) => label(s, xs[i], 128));
   ctx.fillStyle = DIM; ctx.font = '17px Inter, Arial';
   const notes = (m.notes || '').split(' '); let line = '', y = 735;
   for (const w of notes) { if (ctx.measureText(line + w).width > 900) { ctx.fillText(line, 970, y); line = ''; y += 24; } line += w + ' '; } ctx.fillText(line, 970, y);
+  if (!m.scale || !m.horizon) { ctx.fillStyle = '#FF6B6B'; ctx.font = '700 22px Inter, Arial'; ctx.fillText('⚠ meta.scale / meta.horizon missing — set them (reference/LOCATIONS.md → Scale)', 970, 1040); }
   window.DONE = true;
 })().catch((e) => { document.body.insertAdjacentHTML('beforeend', `<pre style="color:#f88">${e.stack}</pre>`); window.DONE = 'error: ' + e.message; });
 </script>
