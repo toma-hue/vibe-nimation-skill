@@ -90,7 +90,8 @@ def report(rows, title, opus_factor):
             k['turns'] += 1; k['inp'] += r['inp']; k['cw'] += r['cw']; k['cr'] += r['cr']; k['out'] += r['out']; k['images'] += r['images']; k['cost'] += c
         models[r['model']] += c
     peak = max(r['inp'] + r['cw'] + r['cr'] for r in rows)
-    print(f'\n=== {title} ===  {int(tot["turns"])} turns · biggest context {peak:,} tokens · {int(tot["images"])} images viewed')
+    avg = sum(r['inp'] + r['cw'] + r['cr'] for r in rows) / len(rows)
+    print(f'\n=== {title} ===  {int(tot["turns"])} turns · biggest context {peak:,} tokens · AVERAGE context re-read per turn {int(avg):,} · {int(tot["images"])} images viewed')
     print(f'{"phase":18} {"turns":>6} {"%cost":>6} {"fresh in":>10} {"cache wr":>10} {"cache rd":>12} {"output":>9} {"images":>7}')
     for ph, d in sorted(by.items(), key=lambda x: -x[1]['cost']):
         print(f'{ph:18} {int(d["turns"]):>6} {100 * d["cost"] / tot["cost"]:>5.0f}% {int(d["inp"]):>10,} {int(d["cw"]):>10,} {int(d["cr"]):>12,} {int(d["out"]):>9,} {int(d["images"]):>7}')
@@ -98,6 +99,7 @@ def report(rows, title, opus_factor):
     print('what the units are made of (before the model factor): fresh input %.0f%% · cache writes %.0f%% · cache READS %.0f%% · output %.0f%%'
           % (share('inp', W_IN), share('cw', W_CW), share('cr', W_CR), share('out', W_OUT)))
     print('per model: ' + ' · '.join(f'{m} {100 * c / tot["cost"]:.0f}%' for m, c in sorted(models.items(), key=lambda x: -x[1])))
+    print('NOTE: a phase looks expensive when it comes LATE (the context is already huge), not because of what it does: the lever is the context size, i.e. fewer, shorter sessions.')
     print('reading it: a big "cache rd" share = the conversation is long and every step re-reads it (→ split into sessions);\n'
           '            a big "output" share = Claude writes a lot of code/text (→ storyboard beats, templates);\n'
           '            many "images" = screenshots kept in the context (→ automated checks, smaller review images).')

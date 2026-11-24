@@ -22,6 +22,13 @@ loops "build → look → repair → look". So:
 - **Sessions:** analysis+plan → one session (end it with `vn.py bible`); cast + locations → one; then **each 2–3 shorts in
   a fresh session or sub-agent that reads only `<work>/bible.md` + its `plan.json` entry + `reference/SHOTS.md`** — never
   the analysis, the stills or the cast sheets again. Tell the user when a fresh session is the cheaper way to continue.
+- **Context budget (hard rule):** a 240-turn single session reached 700 K tokens of context and 80 % of the cost was just
+  re-reading it. The context grows with every turn, so STOP and hand over at these points: after the analysis + plan
+  (step 2), after cast + locations + approval (step 5), and **after every 2–3 delivered shorts** (or sooner, whenever
+  the conversation is clearly long — e.g. ~150 K tokens, `/context` shows it). At each point: run
+  `vn.py bible "<work>"`, then tell the user in Romanian, in one short message: "Contextul e mare. Scrieți `/clear` și
+  lipiți textul de mai jos" and print the **Next** prompt from `bible.md`. Do not continue in the long session; do not
+  summarise instead (a summary still carries the history). A fresh session starts at ~15 K tokens.
 - **Images:** open an image only when no automated check can answer the question. Prefer the text checks
   (`rigtest`, `check`: framing, scale, tiny figures, hands); review images are small and one per change (below). After
   you have judged an image, do not open it again — write the verdict in a line of text.

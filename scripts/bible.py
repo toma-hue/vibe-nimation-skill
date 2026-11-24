@@ -54,6 +54,13 @@ def main():
             done = any(out.glob(f'*/*Short {s["n"]:02d} -*.mp4')) if out.exists() else False
             L.append(f'| {s["n"]:02d} | {s.get("title", "")} | {", ".join(s.get("covers", []))} | {s.get("mood", "")} | {s.get("hook", "")} → {s.get("ending", "")} | {"yes" if done else ""} |')
         L.append('')
+    if pj.exists():
+        todo = [x for x in plan.get('shorts', []) if not any(out.glob(f'*/*Short {x["n"]:02d} -*.mp4'))] if out.exists() else plan.get('shorts', [])
+        if todo:
+            ns = [f'{x["n"]:02d}' for x in todo[:3]]
+            L += ['## Next (paste this into a FRESH session after /clear)',
+                  f'> Folosește vibe-nimation și continuă episodul din {W}. Citește doar bible.md și plan.json. Fă short-urile {", ".join(ns)} (câte unul, în ordine), fără să redeschizi analiza sau fișele personajelor.', '']
+        else: L += ['## Next', 'All shorts delivered.', '']
     (W / 'bible.md').write_text('\n'.join(L), encoding='utf-8'); print(W / 'bible.md', f'({len(chr(10).join(L))} chars)')
 
 
