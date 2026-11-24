@@ -39,7 +39,7 @@ function sheet(S) {
   });
   panel(30, 680, 1150, 370, 'POZE (RIGGING)');
   ctx.save(); rr(40, 700, 1130, 340, 10); ctx.clip(); stage(40, 700, 1130, 340);
-  [['idle', 0], ['point', 0], ['crossed', 0], ['handsOnHead', 0], ['cheer', 0], ['walk', 1], ['run', -1]].forEach(([p, turn], i) => drawCharacter(ctx, S, 120 + i * 158, 1020, 0.3, { pose: p === 'walk' ? walkPose(0.15) : p === 'run' ? walkPose(0.3, true) : p, turn, t: 0, wind: 0, expr: p === 'handsOnHead' ? 'shocked' : p === 'cheer' ? 'laugh' : p === 'run' ? 'determined' : 'neutral' }));
+  [['idle', 0], ['point', 0], ['crossed', 0], ['handsOnHead', 0], ['cheer', 0], ['gunTemple', 0.55], ['walk', 1], ['run', -1]].forEach(([p, turn], i) => drawCharacter(ctx, S, 115 + i * 140, 1020, 0.3, { pose: p === 'walk' ? walkPose(0.15) : p === 'run' ? walkPose(0.3, true) : p, turn, t: 0, wind: 0, expr: p === 'handsOnHead' ? 'shocked' : p === 'cheer' ? 'laugh' : p === 'run' ? 'determined' : 'neutral' }));
   ctx.restore();
   panel(1220, 680, 670, 370, 'PALETĂ · DESCRIERE');
   const c = palette(S);

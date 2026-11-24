@@ -10,9 +10,12 @@
 //   rigcheck.html?page=faces             face lineup: every character, front + 3/4, neutral, hair as a flat silhouette
 //   rigcheck.html?page=review&ids=a,b    review pack: the cast line-up + one row of heads per changed character
 //   rigcheck.html?id=mike&page=props     props × views: riding a bike, the bike alone, held props, every series prop
+//   rigcheck.html?id=mike&page=hands     hands: every gesture (arm out) + reach targets (gun to the temple, hand to mouth /
+//                                        chin / eye / hip / other hand) × the 8 views, upper body
 // Read them cell by cell: hair covers the head in every view (no bald sides), accessories sit on the head,
-// eyes/brows/mouth read as the named expression, limbs attached, feet on the floor line.
-import { drawCharacter, EXPR, walkPose } from './src/core/rig.js';
+// eyes/brows/mouth read as the named expression, limbs attached, feet on the floor line; hands: two arms, each from its
+// own shoulder, the hand shape readable, the reaching hand ON the target (temple, mouth…) in every view.
+import { drawCharacter, EXPR, walkPose, GESTURES } from './src/core/rig.js';
 const q = new URLSearchParams(location.search), cv = document.getElementById('c'), ctx = cv.getContext('2d');
 const BG = '#1A1519', CELL = '#2E2733', LABEL = '#6E1B2E', TXT = '#F3E9EC', DIM = '#B7A9B0';
 const VIEWS = [['FAȚĂ', { turn: 0 }], ['3/4 DR', { turn: 0.55 }], ['PROFIL DR', { turn: 1 }], ['3/4 ST', { turn: -0.55 }], ['PROFIL ST', { turn: -1 }], ['SPATE', { back: true }], ['3/4 SPATE DR', { back: true, turn: 0.55 }], ['3/4 SPATE ST', { back: true, turn: -0.55 }]];
@@ -97,6 +100,26 @@ function review(list, ids) {
   });
 }
 
+function hands(S) {
+  const cols = [...GESTURES.map((g) => [g, { pose: { L: [0.15, -0.1], R: [0.45, 2.1], legL: [0.05, 0, 0], legR: [0.05, 0, 0] }, hand: { R: g } }]),
+    ['gun → temple', { pose: 'gunTemple' }], ['salute', { pose: 'salute' }], ['shush', { pose: 'shush' }], ['chin', { pose: 'chinRest' }],
+    ['facepalm', { pose: 'facepalm' }], ['hips', { pose: 'handsOnHips' }], ['clasp', { pose: 'clasp' }]];
+  const cw = 230, ch = 300, x0 = 150, y0 = 110, h = (S.build || {}).height || 1, sc = 0.5 / h;
+  cv.width = x0 + cw * cols.length + 20; cv.height = y0 + ch * VIEWS.length + 20;
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, cv.width, cv.height);
+  txt(`${S.name} — mâini × perspective (gesturi cu brațul întins, apoi ținte: mâna ajunge exact pe țintă)`, 30, 56, 30, TXT, 'left');
+  cols.forEach(([n], j) => txt(n.toUpperCase(), x0 + cw * j + cw / 2, y0 - 14, 15, DIM));
+  VIEWS.forEach(([vn, v], i) => {
+    txt(vn, 20, y0 + ch * i + ch / 2 + 8, 18, DIM, 'left');
+    cols.forEach(([, o], j) => {
+      const x = x0 + cw * j, y = y0 + ch * i;
+      ctx.save(); ctx.beginPath(); ctx.roundRect(x + 4, y + 4, cw - 8, ch - 8, 10); ctx.fillStyle = CELL; ctx.fill(); ctx.clip();
+      drawCharacter(ctx, S, x + cw / 2, y + 40 + sc * h * 930, sc, { ...v, ...o, expr: 'neutral', t: 0.3, wind: 0, shadow: false });
+      ctx.restore();
+    });
+  });
+}
+
 async function props(S) {
   const PR = await import('./src/props.js'), cw = 270, ch = 330, x0 = 170, y0 = 110;
   const extra = Object.entries(PR).filter(([n, f]) => typeof f === 'function' && !['rideBike', 'held', 'bikeTargets', 'bike', 'walkie', 'flashlight'].includes(n));
@@ -120,7 +143,7 @@ async function props(S) {
   const d = await (await fetch(q.get('file') || 'data/characters.json')).json(), list = d.characters || d;
   if (q.get('page') === 'faces') faces(list);
   else if (q.get('page') === 'review') review(list, (q.get('ids') || '').split(',').filter(Boolean).length ? q.get('ids').split(',') : list.map((c) => c.id));
-  else { const S = list.find((c) => c.id === q.get('id')) || list[0]; await ({ bodies, props }[q.get('page')] || heads)(S); }
+  else { const S = list.find((c) => c.id === q.get('id')) || list[0]; await ({ bodies, props, hands }[q.get('page')] || heads)(S); }
   window.DONE = true;
 })().catch((e) => { document.body.insertAdjacentHTML('beforeend', `<pre style="color:#f88">${e.stack}</pre>`); window.DONE = 'error: ' + e.message; });
 </script>

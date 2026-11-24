@@ -5,7 +5,7 @@
 
 The cast file is Vibe-nimation episodes/_Personaje/<Series>/characters.json (reference/CHARACTERS.md). It is
 shared by every episode of the series: add new characters to it, never start a second one.
-Writes next to it: <Name>.png (sheet), _Distributie.png (everyone side by side) and, for the mandatory review,
+Runs the automated rig test (tools/rigtest.mjs) first and prints only its failures. Writes next to it: <Name>.png (sheet), _Distributie.png (everyone side by side) and, for the mandatory review,
 _verificare/<Name>_capete.png (6 views × 8 expressions) + _verificare/<Name>_corp.png (10 poses × 5 views) per rendered
 character, _verificare/_Fete.png (face lineup: everyone front + 3/4, hair as a flat silhouette) and
 _verificare/_review.png (review pack: the line-up + one row of heads per character rendered this time — the one image
@@ -38,6 +38,10 @@ def main():
             o2 = V / f'{safe_name(c["name"])}_{suffix}.png'
             r = subprocess.run([node, 'tools/page.mjs', f'rigcheck.html?id={c["id"]}&page={page}', str(o2)], cwd=R, env=env, capture_output=True, text=True)
             print(o2 if r.returncode == 0 else f'FAILED {c["id"]} {page}: {r.stderr[-400:]}')
+    # automated rig test (text only, no image): hair coverage in all 8 views, back-of-head/neck axis, hands, arm roots
+    r = subprocess.run([node, 'tools/rigtest.mjs', '--ids', ','.join(sorted(ids)), '--file', 'data/characters.json'], cwd=R, env=env, capture_output=True, text=True)
+    print((r.stdout or r.stderr).strip()[-1500:])
+    if r.returncode != 0: print('RIGTEST FAILED: fix the spec (a single character) or the rig (several) BEFORE opening any image')
     V = C / '_verificare'; V.mkdir(exist_ok=True)
     for url, out in (('sheet.html?cast=1', C / '_Distributie.png'), ('rigcheck.html?page=faces', V / '_Fete.png'),
                      (f'rigcheck.html?page=review&ids={",".join(sorted(ids))}', V / '_review.png')):

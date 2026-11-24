@@ -108,7 +108,22 @@ breaking the style. Worked examples:
 
 Extras (a cop, a nurse) still get their own hair and face numbers — vary them; never copy another character's.
 
+## Hands and gestures — always from the rig
+Every character has exactly two arms rooted at its shoulders; a gesture or a held thing is an option of `drawCharacter`
+(and of the storyboard's `who`), never a hand drawn in a shot:
+- `hand: { L, R }` — `relaxed open fist point gun salute palmUp grip pinch` (a held prop defaults to `grip`).
+- `reach: { L, R }` — a target the hand lands on, by two-bone IK from the shoulder: `temple head eye mouth chin chest hip
+  pocket otherHand`, or `[x, y]` in character units, or `{ to, w }` (`w` 0…1 blends the reach in).
+- ready poses: `gunTemple` (finger gun at the temple), `salute`, `chinRest`, `shush`, `handsOnHips`, `clasp`; helper
+  `gunToTemple('R')`; `facepalm` reaches for the eye. `[out, bend]` angle poses stay for everything else.
+- `hold: { R: held(prop) }` — objects in the hand (props.js). New gesture or gesture fix → the rig (rig.js), then
+  `rigcheck.html?id=<id>&page=hands` (gestures × 8 views) and `node tools/rigtest.mjs`.
+
 ## Check (every time `cast` runs)
+**First, the automated rig test** (`node tools/rigtest.mjs [--ids a,b] [--only hair,hands,reach]`, run by `vn.py cast`; it
+prints only failures and `RIGTEST: N pass, M fail`): hair coverage in all 8 views (no bald sides/temples, profile hair one
+mass with no ink inside), back and 3/4-from-behind head (a real skull, the nape — not a chin — and the head/neck/shoulders on
+one axis), hands reach their target, two arms rooted at the shoulders. Only when it passes open images, cheapest first.
 Per iteration open `_verificare/_review.png` (the line-up + one row of heads per changed character, all views) and,
 when faces changed, `_verificare/_Fete.png`. **Before the stop, once, open every `<Name>.png`, `_capete` and `_corp`**:
 - **Hair in every view** (front, 3/4 both sides, profile both sides, back, 3/4 from behind both sides): covered as in the stills — no bald temples

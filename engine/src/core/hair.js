@@ -13,7 +13,7 @@
 import { OL, smooth, ink, hash, clamp, lerp, circle, shade } from './lib.js';
 
 /** skull half-width the side volume is added to (the face is ±64 at the temples) */
-const SKULL = 80;
+export const SKULL = 80;
 const BASE = { top: 12, width: 6, length: -834, fringe: 'side', fringeLen: -866, texture: 'straight', amp: 6, part: -24, taper: 1, flip: 0, quiff: 0, hairline: -884 };
 export const HAIR_PRESETS = {
   short:    { top: 12, width: 4, length: -834, fringe: 'side', fringeLen: -868, part: -26 },
@@ -94,13 +94,14 @@ function halfW(p, y) {
 /** outline of the mass behind the face (closed, clockwise from bottom-left) */
 function massPts(p, back = false) {
   const top = -840 - (90 + p.top), pts = [];
-  const Lside = p.length <= -800 ? p.length : p.length;
-  for (let y = Lside; y >= top + 6; y -= 12) pts.push([-halfW(p, y), y]);
+  const Lside = p.length;
+  const ys = []; for (let y = Lside; y > -834; y -= 12) ys.push(y);      // the sides, up to where the crown arc starts
+  for (const y of ys) pts.push([-halfW(p, y), y]);
   for (let i = 0; i <= 16; i++) {                       // crown arc, with the quiff lifting the front middle
     const a = Math.PI * (1 + i / 16), x = Math.cos(a) * (SKULL + p.width) * 0.98, yy = -840 + Math.sin(a) * (90 + p.top);
     pts.push([x, yy - p.quiff * 26 * Math.exp(-(x * x) / 4200)]);
   }
-  for (let y = top + 6; y <= Lside; y += 12) pts.push([halfW(p, y), y]);
+  for (const y of ys.slice().reverse()) pts.push([halfW(p, y), y]);
   if (p.length > -800) {                                // long: ends, with a soft U across the back
     const w = halfW(p, p.length);
     pts.push([w * 0.55, p.length + 6], [0, p.length + 10], [-w * 0.55, p.length + 6]);
@@ -173,15 +174,14 @@ export function hairFrontPiece(ctx, p, c, o = {}) {
   }
   // 2 · temple locks: down the temple, over the top of the ear, a sideburn — or long locks framing the face
   // slicked / swept-back hair: short neat temples; everything else: down the temple to the length
-  const end = isLong(p) ? -730 : p.fringe === 'swept' ? Math.max(clamp(p.length, -872, -760), -850) : clamp(p.length, -872, -760), inner = p.buzz ? W + 2 : W - 4;
+  const end = isLong(p) ? -730 : p.buzz ? clamp(p.length, -850, -836) : p.fringe === 'swept' ? Math.max(clamp(p.length, -872, -760), -850) : clamp(p.length, -872, -760), inner = p.buzz ? W - 6 : W - 4;
   for (const s of near) {
-    if (p.buzz && end < -846) continue;
     const cap = isLong(p) ? 1e9 : W + 12 + Math.max(0, p.width) * 0.6;
     const outerX = (y) => s * Math.min(halfW(p, Math.min(y, -800)), cap);
-    let pts = [[s * (W - 10), -878], [outerX(-878), -878]];
+    let pts = [[s * (W - 14), -880], [outerX(-878), -878]];
     for (let y = -860; y <= end; y += 14) pts.push([outerX(y) + (isLong(p) ? s * 6 : 0), y]);
     const lowIn = isLong(p) ? s * (W - 6) : s * inner;
-    pts.push([lowIn + s * 4, end + 2], [lowIn, Math.min(end - 12, -812)], [s * (W - 3), -848], [s * (W - 8), -866]);
+    pts.push([lowIn + s * 4, end + 2], [lowIn, Math.min(end - 12, -812)], [s * (W - 5), -848], [s * (W - 12), -866]);
     let lower = pts.slice(pts.length - 4);
     if (p.texture !== 'straight') lower = textured(lower, p.texture, p.amp * 0.7, p.seed + s * 5, false, s);
     const all = [...pts.slice(0, pts.length - 4), ...lower].map(([x, y]) => [m(x), y]);
@@ -195,16 +195,15 @@ export function hairBackView(ctx, p, c, o = {}) {
   if (!p) return;
   const t = o.t || 0, wind = o.wind ?? 1;
   if (p.extra === 'ponytail') { const sw = Math.sin(t * 2.2) * 6 * wind; smooth(ctx, [[-26, -880], [26, -880], [30 + sw, -760], [12 + sw * 1.5, -660], [-12 + sw * 1.5, -660], [-30 + sw, -760]], true, 0.5); }
-  const m = o.map || ident;                                   // 3/4 from behind: squeezed on the far side
+  const m = o.map || ident;                                   // 3/4 from behind: m(x, y) slides the nape to the far side
   let pts = massPts(p, true);
-  pts = textured(pts, p.texture, p.amp, p.seed + 9, true, 1).map(([x, y]) => [m(x), y]);
+  pts = textured(pts, p.texture, p.amp, p.seed + 9, true, 1).map(([x, y]) => [m(x, y), y]);
   smooth(ctx, pts, true, kOf(p.texture)); ink(ctx, c.hair);
   if (p.extra === 'ponytail') { const sw = Math.sin(t * 2.2) * 6 * wind; smooth(ctx, [[-24, -890], [24, -890], [28 + sw, -760], [10 + sw * 1.5, -650], [-10 + sw * 1.5, -650], [-28 + sw, -760]], true, 0.5); ink(ctx, c.hair); }
   if (p.extra === 'bun') { circle(ctx, 0, -940 - p.top, 40); ink(ctx, c.hair); }
-  if (!o.flat && !p.buzz) {
-    ctx.strokeStyle = c.hairHi; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
-    const bot = Math.min(p.length + 30, -800);
-    for (let i = 0; i < 5; i++) { const x = -44 + i * 22; ctx.beginPath(); ctx.moveTo(m(x * 0.8), -910 - p.top * 0.5); ctx.quadraticCurveTo(m(x), -850, m(x * 1.1), bot); ctx.stroke(); }
+  if (!o.flat && !p.buzz) {                                   // cel shade on the far side (no ink inside the mass)
+    ctx.save(); smooth(ctx, pts, true, kOf(p.texture)); ctx.clip(); ctx.fillStyle = shade(c.hair, -0.25); ctx.globalAlpha = 0.55;
+    ctx.beginPath(); ctx.ellipse(m(70), -820, 60, 150, 0.15, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   }
 }
 
@@ -216,48 +215,62 @@ export function hairProfileBehind(ctx, p, c, o = {}) {
   if (p.extra === 'ponytail') { smooth(ctx, [[-70, -880], [-118, -870 + Math.sin(t * 2) * 4], [-140, -790], [-128, -700], [-104, -760], [-84, -840]], true, 0.5); ink(ctx, c.hair); }
   if (p.extra === 'bun') { circle(ctx, -72, -930 - p.top * 0.5, 36); ink(ctx, c.hair); }
 }
-/** the hair outline in profile + the fringe tip. Call after the face. */
+/** the hair in profile: ONE silhouette (fringe + crown + back + nape) over the whole skull. Call after the face.
+ *  Depth ≈ 1.1 × the front width; the lower edge goes around the ear (covered down to `length`); ink only on the outline. */
 export function hairProfile(ctx, p, c, o = {}) {
   if (!p) return;
-  const t = o.t || 0, wind = o.wind ?? 1, sway = Math.sin(t * 2.4) * 3 * wind, F = o.front || 60;
-  const rx = (p.buzz ? 76 : 80) + p.width * 0.7, ryT = (p.buzz ? 88 : 92) + p.top, cx = -10, cy = -852;
-  const H = p.hairline - p.quiff * 6, pts = [];
-  // front hairline → over the top → down the back
-  pts.push([F - 12 + p.quiff * 10, H]);
-  if (p.quiff > 0) pts.push([F - 2 + p.quiff * 16, -904 - p.quiff * 20], [F - 16 + p.quiff * 8, -924 - p.quiff * 34]);
-  for (let i = 0; i <= 14; i++) {
-    const a = -Math.PI * 0.30 - Math.PI * 0.95 * i / 14;        // from front-top over to the back
-    pts.push([cx + Math.cos(a) * rx * (i < 3 ? 0.92 : 1), cy + Math.sin(a) * ryT]);
+  const t = o.t || 0, wind = o.wind ?? 1, sway = Math.sin(t * 2.4) * 3 * wind, swf = Math.sin(t * 2.6) * 2 * wind;
+  const pts = profileOutline(p, sway, swf);
+  const outline = textured(pts, p.texture, p.amp * (p.buzz ? 0.5 : 1), p.seed + 11, true, -1);
+  smooth(ctx, outline, true, kOf(p.texture)); ink(ctx, c.hair, p.buzz ? 4 : 5);
+  if (!o.flat && !p.buzz) {                                      // cel shade on the back of the head (no lines inside)
+    const sh = () => smooth(ctx, outline, true, kOf(p.texture));
+    ctx.save(); sh(); ctx.clip(); ctx.fillStyle = shade(c.hair, -0.25); ctx.globalAlpha = 0.6;
+    ctx.beginPath(); ctx.ellipse(profileBack(p) + 6, -800, 70, 120, 0.3, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   }
-  const L = p.length, longH = isLong(p);
-  const backX = cx - rx * 0.98;
-  if (L > -800) {                                                // hair continues below the ear line at the back
-    const yb = L, w = (70 + p.width * 0.6) * p.taper;
-    pts.push([backX, -800], [-14 - w - p.flip + sway, yb - 18], [-10 - w * 0.9 - p.flip + sway, yb], [-38 + sway * 0.5, yb + 4]);
-    pts.push([-36, Math.max(yb - 40, -790)], [-36, -812]);            // behind the ear
-    pts.push([-24, -852], [6, -860], [34, -870]);
+}
+/** x of the back of the hair in profile (head units, facing right) */
+export function profileBack(p) { const W0 = SKULL + p.width; return 66 - 1.1 * 2 * W0 * (p.buzz ? 0.93 : 1); }
+function profileOutline(p, sway = 0, swf = 0) {
+  const F = 60, H = p.hairline - p.quiff * 6, q = p.quiff, L = p.length;
+  const front = (p.buzz ? 63 : 68) + Math.max(0, p.width) * 0.1, back = profileBack(p);
+  const rx = (front - back) / 2, cxh = back + rx, cy = -850, ryT = (p.buzz ? 88 : 92) + p.top;
+  const pts = [];
+  // 1 · the front edge, from the fringe tip / hairline up to the crown
+  const fl = p.fringeLen;
+  let lower;                                                    // fringe lower edge, from the temple forward to the tip
+  if (p.fringe === 'full' || p.fringe === 'messy') {
+    pts.push([F + 10 + swf, fl], [F + 8, (H + fl) / 2]);
+    lower = [[F - 26, H + 16], [F - 26, fl - 6], [F - 12, fl + 3]];
+  } else if (p.fringe === 'side' || p.fringe === 'curtain' || p.fringe === 'part') {
+    const fs = Math.max(fl, p.fringe === 'part' ? -866 : -854);
+    pts.push([F + 4 + swf, fs], [F + 6, (H + fs) / 2]);
+    lower = [[F - 26, H + 14], [F - 16, fs - 3]];
   } else {
-    const ye = clamp(L, -856, -792);                                 // over the ear: above it, or covering it down to L
-    pts.push([backX + 2, Math.max(L - 4, -812)], [-60 - p.width * 0.3, Math.max(L, -800)], [-44, ye + 2], [-38, ye - 2], [-22, ye - 8]);
-    if (!p.buzz) pts.push([-8, ye - 6], [-3, Math.min(ye + 22, -804)], [7, Math.min(ye + 22, -804)], [12, ye - 10]);
-    pts.push([34, H + 18]);
+    pts.push([F - 2, H]);
+    lower = [[F - 18, H + 14], [F - 8, H + 4]];
   }
-  let outline = textured(pts, p.texture, p.amp, p.seed + 11, true, -1);
-  smooth(ctx, outline, true, kOf(p.texture)); ink(ctx, c.hair);
-  if (!o.flat && !p.buzz) {
-    ctx.strokeStyle = c.hairHi; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
-    for (const [x, y] of [[24, -910 - p.top * 0.5], [-16, -920 - p.top * 0.6], [-52, -892 - p.top * 0.3]]) { ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x - 14, y + 16, x - 30, y + 22); ctx.stroke(); }
+  pts.push([front, H - 12]);
+  if (q > 0) pts.push([front - 6 + q * 14, -906 - q * 22], [front - 24 + q * 10, -928 - q * 34]);
+  // 2 · over the crown to the back of the head
+  const a0 = -Math.PI * (q > 0 ? 0.36 : 0.22);
+  for (let i = 0; i <= 12; i++) { const a = a0 + (-Math.PI - a0) * i / 12; pts.push([cxh + Math.cos(a) * rx, cy + Math.sin(a) * ryT]); }
+  // 3 · down the back, the nape / ends, forward along the lower edge around the ear
+  const ear = -22;
+  if (L > -740) {                                               // long: down the back, the ends, up behind the ear
+    const w = (back - 6) * p.taper;
+    pts.push([back - 2, -800], [w - p.flip + sway, L - 20], [w * 0.92 - p.flip + sway, L], [-42 + sway * 0.5, L + 4]);
+    pts.push([-38, Math.max(L - 40, -786)], [-38, -810], [ear, -846], [-4, -852], [12, -858]);
+  } else {
+    const ye = clamp(L, -856, -776);                            // over the ear: above it, or covering it down to L
+    const nape = L > -800 ? L : p.buzz ? -802 : -794;              // the back of the head always reaches the nape
+    pts.push([back + 2, Math.max(nape - 24, -826)], [lerp(back, ear, 0.45), nape + 2], [ear - 20, ye + 4], [ear - 8, ye - 2], [ear + 6, ye - 3]);
+    const sb = Math.max(ye, -812);                              // the sideburn in front of the ear
+    pts.push([ear + 14, ye], [ear + 16, sb], [ear + 26, sb], [ear + 30, Math.min(ye, sb - 6)]);
   }
-  // the fringe seen from the side: a filled lock over the forehead, ink only on its lower edge
-  const fl = p.fringeLen, sw = Math.sin(t * 2.6) * 2 * wind;
-  let lock = null;
-  if (p.fringe === 'full' || p.fringe === 'messy') lock = [[F - 30, H - 10], [F - 2, H - 6], [F + 8 + sw, fl], [F - 14, fl + 2], [F - 26, fl - 6]];
-  else if (p.fringe === 'side' || p.fringe === 'curtain') lock = [[F - 30, H - 10], [F - 6, H - 4], [F + 2 + sw, Math.max(fl, -852)], [F - 16, Math.max(fl, -852) - 2]];
-  if (lock) {
-    if (p.fringe === 'messy' || p.texture === 'shaggy') lock = textured(lock, 'shaggy', p.amp + 4, p.seed + 13, true, -1);
-    fillOnly(ctx, lock, c.hair, 0.2);
-    strokeOpen(ctx, lock.slice(2), 4, 0.2);
-  }
+  pts.push([24, -852]);                                         // the temple
+  pts.push(...lower);
+  return pts;
 }
 
 // ---------- hats (wide brim, pinched crown, band) ----------
