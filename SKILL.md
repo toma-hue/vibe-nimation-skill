@@ -54,6 +54,10 @@ the content needs it, never over **3:00** (YouTube's Shorts limit) — split int
 the first 2 s, one clear arc, an ending that pulls to the next short. Write `<work>/plan.json` + `plan.md`: number,
 working title, episode time range(s) covered, beats, characters, mood, estimated length (+ why if > 90 s),
 viral score 1–10 with the reason.
+**Every short scored below 7 gets the drama boost** (`reference/ANALYSIS.md` → "Drama boost"): open on the strongest
+moment of its part (in media res, then back to the start), name the stakes, stronger lines, emotion, shots, FX, music
+and a harder cliffhanger — same events, same meaning, nothing invented. Then re-score it honestly; the target is ≥ 7.
+Note in plan.json `boost` what changed (score before → after).
 
 ## 3 · Characters (vector sheets, reused across episodes)
 Cast file: `<root>/Vibe-nimation episodes/_Personaje/<Series>/characters.json` — format and every option in
@@ -97,7 +101,8 @@ expression changes on the beat, impact FX on the peaks.
 ## 5 · STOP — the user approves (one message, in Romanian)
 Show: the detected series / season / episode / title (and how sure you are), the cast with the path of
 `_Distributie.png` and each sheet, the locations with each location sheet, and the plan as a numbered list — for each short: title, what it covers (episode
-times), estimated length (and why if > 90 s), mood, viral score /10 with one line of reason. Ask them to approve or
+times), estimated length (and why if > 90 s), mood, viral score /10 with one line of reason (for a boosted short: the score before → after and, in one line, what
+the boost changed). Ask them to approve or
 change it. **Do not voice or animate anything until they say yes.** Apply their changes (plan, characters or locations) and confirm.
 
 ## 6 · Make each short (in order: 01, 02, …)
@@ -105,7 +110,8 @@ change it. **Do not voice or animate anything until they say yes.** Apply their 
 2. **Script** — `script.json`, rules in `reference/SHOTS.md` → "Script": the narrator retells this part in his own
    words, present tense, punchy, dramatic, ~150–160 words per minute; hook first; characters' key lines are said by
    the narrator with `"mime": "<id>"` so the character mouths them (short, only the lines that matter, a few per short);
-   `emotion` 0.4 calm → 1.0 shouting.
+   `emotion` 0.4 calm → 1.0 shouting. **Cold open:** line 0 is the hook and is heard from the very first frame — no
+   intro, no lead-in, no "In this episode…". A boosted short (score < 7) follows its boost plan from the plan.
 3. `python SKILL/scripts/vn.py voice "<short>"` → narration + word timings. Lines that don't match the script after 4
    takes are flagged: rephrase them and re-voice with `--only 3,7`. Read `data/words.txt` for timings.
 4. **Shots** — rewrite `src/shots.js` (the copied file is a complete working example: study it). One shot per beat
@@ -118,7 +124,8 @@ change it. **Do not voice or animate anything until they say yes.** Apply their 
    music mood: `reference/SHOTS.md`.
 5. `python SKILL/scripts/vn.py build "<short>" --preview` → music (if missing), mix, error + **framing check** (text:
    any character, face or marked prop off the 9:16 frame or under the captions, per shot), `review/all.jpg`.
-   Fix every framing warning first (it costs no image). Then **open `review/all.jpg` once** and check every shot
+   Fix every framing warning first (it costs no image). An `OPENING` warning (frame 0 dark, first word late) you fix
+   yourself and re-check — never mention it to the user. Then **open `review/all.jpg` once** and check every shot
    against `reference/STYLE.md` → "Check". For fixes, don't rebuild and reopen the whole sheet: re-capture only the
    2–3 changed moments, `node tools/capture.mjs frames review/f "12.3,40.1"` (or `sheet review/fix.jpg "12.3,40.1"`)
    inside the short folder, and run `node tools/capture.mjs check S04,S05` for the changed shots.
@@ -137,6 +144,9 @@ Summarise in Romanian: the folder, every short with its title, length and score,
 Offer precise changes ("short 3 slower", "Maya's jacket is green") and re-render only what changed.
 
 ## Rules
+- **Every short opens cold:** frame 0 is the full picture of S01 and the first line starts at once. Never a fade from
+  black, a black frame, bars coming in or a silent lead-in at the start (voice.py forces no lead-in, the music starts at
+  full level, the engine ignores `fade()` in the first second). The fade to black at the **end** stays.
 - Captions: the current default style (white, black outline, the spoken word in yellow, pop-in) is the user's approved
   look — keep it unless they ask.
 - Never put the episode's own audio, music, footage or frames into a short. Everything on screen is drawn in code;

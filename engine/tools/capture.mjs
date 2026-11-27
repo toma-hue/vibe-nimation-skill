@@ -177,6 +177,16 @@ try {
     }
     if (framing) console.log(`FRAMING WARNINGS: ${framing} — fix them (shot helpers closeUp/medium/wide, focus(), captions:{y}) or list deliberate exits in the shot's allowOff: [names]`);
     else console.log('framing ok: no character, face or marked prop off-frame or under the captions');
+    // opening: a cold open — the picture from frame 0 and the first word right away (the agent fixes it, then re-checks)
+    if (!rest[0] || ids.includes(sc[0].id)) {
+      const l0 = await w.evalv('OP.luma(0)'), l1 = await w.evalv(`OP.luma(${Math.round(FPS * 1.2)})`);
+      let w0 = null; try { w0 = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/words.json'), 'utf8'))[0]?.s ?? null; } catch {}
+      const op = [];
+      if (l0 < 18 || l0 < l1 * 0.45) op.push(`frame 0 is dark (brightness ${l0.toFixed(0)} vs ${l1.toFixed(0)} at 1.2 s): S01 must open on the full picture — no fade, black or bars coming in`);
+      if (w0 != null && w0 > 0.15) op.push(`the first word starts at ${w0.toFixed(2)} s: re-run vn.py voice (no lead-in) and cut S01 on line 0`);
+      if (op.length) { console.log('OPENING (fix it yourself before showing anything):'); op.forEach((x) => console.log('  ⚠ ' + x)); }
+      else console.log(`opening ok: cold open on the picture, first word at ${(w0 ?? 0).toFixed(2)} s`);
+    }
     const errs = await w.evalv('OP.errors()'); if (errs.length) { console.log('SCENE ERRORS:'); errs.forEach((e) => console.log(' ', e.id, e.msg, '\n', (e.stack || '').split('\n').slice(0, 4).join('\n'))); exit = 2; }
     if (w.logs.length) console.log('PAGE LOGS:\n ' + [...new Set(w.logs)].slice(0, 30).join('\n '));
     w.close();

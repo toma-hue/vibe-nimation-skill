@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import cast_dir, copy_engine, episode_meta, load_config  # noqa: E402
 
 SKELETON = {
-    "lead_in": 0.4, "tail": 1.2,
+    "tail": 1.2,
     "lines": [
         {"text": "Hook: the most gripping sentence of this part, first.", "emotion": 0.7, "gap": 0.35},
         {"text": "A character's own line, said by the narrator and mimed on screen.", "emotion": 0.85, "mime": "<character id>", "gap": 0.4},

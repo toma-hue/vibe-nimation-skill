@@ -152,7 +152,7 @@ def score(mood, dur, seed, key=None, bpm=None):
     L, R = lp(L + wetL * 0.35, 9000), lp(R + wetR * 0.35, 9000)
     L, R = hp(L, 35), hp(R, 35)
     n = int(dur * SR); out = np.stack([L[:n], R[:n]], 1)
-    fade = int(SR * 1.5); out[:int(SR * 0.4)] *= np.linspace(0, 1, int(SR * 0.4))[:, None]; out[-fade:] *= np.linspace(1, 0, fade)[:, None]
+    fade = int(SR * 1.5); out[:int(SR * 0.015)] *= np.linspace(0, 1, int(SR * 0.015))[:, None]; out[-fade:] *= np.linspace(1, 0, fade)[:, None]
     return out / (np.abs(out).max() + 1e-9) * 0.89
 
 

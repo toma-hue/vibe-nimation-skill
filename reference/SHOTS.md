@@ -5,6 +5,8 @@ The engine copy in every short is self-contained: `index.html` (player), `src/ma
 
 ## Script
 - English, narrator's voice, **present tense, second-hand retelling**: "Mike runs. Behind him, the lights die one by one."
+- **Cold open: line 0 is the hook and plays from frame 0** — no intro, no setup, no "Today…" / "In this episode…".
+  It is the most gripping thing of this part: a threat, a reveal, a character's strongest line (mimed), a question.
 - Hook first. Short sentences, one idea each; every sentence is a possible cut. ~150–160 words per minute.
 - Write for the ear: numbers and dates as spoken ("nineteen eighty-three"), no abbreviations, no symbols.
 - Character lines: the narrator says them, with `"mime": "<id>"` → the character mouths them (`T.talk`). Use the line
@@ -12,9 +14,15 @@ The engine copy in every short is self-contained: `index.html` (player), `src/ma
 - `emotion`: 0.4 calm exposition · 0.55–0.65 normal storytelling · 0.75–0.85 tense / dramatic · 0.9–1.0 shouting.
 - `gap` after a line: 0.25 normal · 0.4–0.6 a beat of suspense · 0.8+ before a reveal.
 - End with a pull: a question, a threat, a reveal cut short ("And then the door opens.").
+- **Boosted short (plan score < 7)** — the same events, told harder (ANALYSIS.md → "Drama boost"):
+  open in media res on the peak of the part ("The door opens by itself. Will is alone in the house.") then jump back
+  ("Five minutes earlier…" / "It started with a phone call."); say the stakes out loud ("One wrong word and it's
+  over."); contrast and short punches ("He smiles. He's lying."); a rhetorical question at the turn; `emotion` +0.1–0.15
+  on the key lines; longer `gap` (0.5–0.9) before the reveals; one character line as a mimed punch; end on the hardest
+  cliffhanger the part allows. Never invent an event, a line someone didn't say or a different outcome.
 
 ```json
-{"lead_in": 0.4, "tail": 1.2, "lines": [
+{"tail": 1.2, "lines": [
   {"text": "Three boys. One bike ride home. Only two make it.", "emotion": 0.7, "gap": 0.45},
   {"text": "Will, don't go out there!", "emotion": 0.9, "mime": "mike", "gap": 0.35}]}
 ```
@@ -29,6 +37,9 @@ export function buildShots(T) { const S = []; … S.cues = cues; S.music = { moo
 ```
 **Timing** — `T.L(i)` start of script line i · `T.E(i)` end · `T.w('word', T.L(i))` start of a word in/after line i ·
 `T.talk(id, t)` mouth for mimed lines · `T.mouthAt(t)` · `T.CH.<id>` a spec · `T.dur`.
+**Cold open** — S01 starts at 0 and is the full picture on frame 0: camera already moving, no `fade` / black / `bars`
+easing in at the start (the engine ignores `fade()` in the first second anyway). `fade` is for the END (and inner
+flashbacks). `check` prints `OPENING` if frame 0 is dark or the first word is late — fix it, don't report it.
 **Shot** — `{ id, start, note, draw(c, lt, sh, t), finish?, captions?, over? }`; `lt` = time inside the shot,
 `sh.dur` its length, `t` film time. Push in time order; cut with `start: T.L(i) - 0.15`. `captions: false` hides them
 for a shot; `captions: {y: 600}` moves them (e.g. when a face is low). `finish: {tint: 'rgba(60,90,160,0.35)', vignette, grain}`.
@@ -93,6 +104,9 @@ back view. Two tools:
 Add series props to `_Locatii/<Series>/props.js` in the same style (flat fills, ink, `mark()` at the end; a `backSide`
 look when it can be seen from behind), then render **`vn.py locations "<work>" --objects <character id>`** →
 `_Locatii/<Series>/_Obiecte.png` (riding, the bike, held props, every series prop × all 8 views) and read it.
+**Boosted shorts** (plan score < 7) get the stronger treatment everywhere: more close-ups and extreme close-ups, a
+push-in or whip on every line change, `shake`/`flash`/`speedLines` on the peaks, `bars` or a `voidBg` on the reveal, an
+upgraded music mood (calm → mystery/tension, tension → action/epic) and a `silence` cue right before the biggest word.
 **FX** (after `scene`) — `flash(c, lt, t0, d)`, `speedLines(c, t, k, cx, cy)`, `pulse(c, t, k, color)`, `bars(c, k)`, `fade(c, k)`.
 
 **Sound** — `q(t, type, {gain, end, pan})`: whoosh (cuts, fast moves), boom (big reveal), hit (impact), riser (`end`),
@@ -111,6 +125,9 @@ moods tension sad epic mystery action hopeful horror calm romantic comedy (scrip
 - **Chase/run**: `walkPose(lt * 2.6, true)`, `turn: ±0.9`, camera tracking (x moves with the runner, background f < 1 slides),
   `motes`/`speedLines` low k, heartbeat/steps cues.
 - **Two-shot dialogue**: two characters medium, `turn` toward each other, alternate close-ups on the line changes.
-- **Flashback/memory**: `voidBg` or a set with `finish: {tint: 'rgba(200,160,90,0.35)'}`, slow push, `fade` in/out.
+- **Flashback/memory**: `voidBg` or a set with `finish: {tint: 'rgba(200,160,90,0.35)'}`, slow push, `fade` in/out (never as the opening).
+- **In-media-res open** (boosted shorts): S01–S02 the peak (close, loud, FX), then a `whoosh` + flash or a hard cut to
+  the start of the story with a short time tag in the narration ("Five minutes earlier."); the peak comes back later in
+  full, so the viewer stays for it.
 - **Danger/monster** (don't show gore): silhouettes (a character spec all dark colours), `pulse`, lightning, fog, a scream
   as a mimed line, cut to the reaction instead of the act.

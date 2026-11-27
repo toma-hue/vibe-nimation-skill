@@ -67,8 +67,11 @@ export function speedLines(ctx, t, k = 1, cx = W / 2, cy = H * 0.45, color = '#F
 }
 /** cinema bars, k 0..1 */
 export function bars(ctx, k = 1, h = 160) { if (k <= 0) return; ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, h * k); ctx.fillRect(0, H - h * k, W, h * k); ctx.restore(); }
-/** fade to/from black: k 0 clear … 1 black */
-export function fade(ctx, k, color = '#000') { if (k <= 0) return; ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = clamp(k); ctx.fillStyle = color; ctx.fillRect(0, 0, W, H); ctx.restore(); }
+/** film time of the frame being drawn (set by main.js) — the opening is always a cold open */
+let FILM_T = 99; export const OPEN_CLEAR = 1.0;
+export function setFilmTime(t) { FILM_T = t; }
+/** fade to/from black: k 0 clear … 1 black. Ignored in the first OPEN_CLEAR s of the short: it starts on the picture, never from black. */
+export function fade(ctx, k, color = '#000') { if (k <= 0 || FILM_T < OPEN_CLEAR) return; ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = clamp(k); ctx.fillStyle = color; ctx.fillRect(0, 0, W, H); ctx.restore(); }
 /** red/teal pulse for danger, k 0..1 */
 export function pulse(ctx, t, k = 1, color = '#C0182F') { if (k <= 0) return; ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); const a = (0.25 + 0.2 * Math.sin(t * 8)) * k; const g = ctx.createRadialGradient(W / 2, H / 2, H * 0.25, W / 2, H / 2, H * 0.7); g.addColorStop(0, rgba(color, 0)); g.addColorStop(1, rgba(color, a)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); ctx.restore(); }
 

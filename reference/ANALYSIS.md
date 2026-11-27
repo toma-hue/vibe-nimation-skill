@@ -33,13 +33,31 @@ not enough, pull a 1 fps clip sheet (`--clip`) or full stills (`--frames`) for t
   needed in a few words.
 - The narrator may reorder within a short for the hook (flash-forward), but the shorts as a series stay in order.
 
+## Drama boost (every short scored < 7)
+A quiet part still has to stop the scroll. Re-plan it, without changing what happens or what it means:
+1. **Open in media res** — the first line and shot are the most tense / surprising moment of this part; then go back to
+   its start and tell it up to that moment again, in full.
+2. **Stakes out loud** — what can be lost, who is in danger, what someone is hiding; a ticking clock if the scene has one.
+3. **Sharper writing** — short punches, contrast ("He smiles. He's lying."), one rhetorical question at the turn, the
+   strongest character line of the part as a mimed punch, higher `emotion`, suspense gaps before reveals.
+4. **Stronger picture and sound** — more close-ups, faster cuts, FX on the peaks, a darker/bigger music mood, a silence
+   drop before the key word (SHOTS.md → "Boosted shorts").
+5. **Harder ending** — cut on the open question or the first second of the next part's peak.
+6. **Catchier title** (POSTING.md).
+Allowed: reorder inside the short, reframe, emphasise, cut. **Not allowed:** inventing events, lines, motives or
+outcomes, or spoiling the next short's twist. Re-score honestly after the boost (target ≥ 7); if it still can't
+reach 7, say why in `score_reason`.
+
 plan.json:
 ```json
 {"series": "…", "label": "S01E01", "shorts": [
   {"n": 1, "title": "working title", "covers": ["00:00–03:40", "05:10–06:00"], "beats": ["B01", "B02", "B04"],
    "characters": ["mike", "will"], "mood": "mystery", "est_seconds": 75, "why_long": "",
-   "hook": "first line idea", "ending": "cliffhanger idea", "score": 8, "score_reason": "…"}]}
+   "hook": "first line idea", "ending": "cliffhanger idea", "score": 8, "score_reason": "…",
+   "boost": null}]}
 ```
+A boosted short: `"boost": {"score_before": 5, "open": "the peak it opens on (episode time)", "changes": "stakes line,
+mimed punch, silence drop, harder cliffhanger"}` and `score` is the score after the boost.
 
 ## Viral score (1–10, the same rubric for plan and .txt)
 - 9–10: an unmissable hook + a twist or huge emotional/comedic payoff; people will comment and share.

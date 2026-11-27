@@ -1,6 +1,6 @@
 // Boot: fonts → timing + cast → shots → player UI, or the capture API window.OP (used by tools/capture.mjs).
 import { W, H, FPS } from './core/lib.js';
-import { finish } from './core/scene.js';
+import { finish, setFilmTime } from './core/scene.js';
 import { loadTiming, T } from './core/timing.js';
 import { setupCaptions, drawCaptions, captionBox } from './core/captions.js';
 import { buildShots } from './shots.js';
@@ -16,7 +16,7 @@ const out = document.getElementById('out'), ctx = out.getContext('2d');
 
 function shotAt(t) { for (let i = SHOTS.length - 1; i >= 0; i--) if (t >= SHOTS[i].start - 1e-6) return i; return 0; }
 function render(t) {
-  const i = shotAt(t), sh = SHOTS[i], lt = t - sh.start;
+  const i = shotAt(t), sh = SHOTS[i], lt = t - sh.start; setFilmTime(t);
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.filter = 'none'; ctx.globalAlpha = 1; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
   try { ctx.save(); sh.draw(ctx, lt, sh, t); ctx.restore(); if (sh.finish !== false) finish(ctx, t, sh.finish || {}); }
   catch (err) {
@@ -34,6 +34,7 @@ async function boot() {
   setupCaptions(T.words, T.style);
   SHOTS = buildShots(T);
   if (!SHOTS.length) throw new Error('buildShots returned no shots');
+  SHOTS[0].start = 0;   // cold open: the first shot is on screen from frame 0
   for (let i = 0; i < SHOTS.length; i++) { SHOTS[i].end = SHOTS[i + 1] ? SHOTS[i + 1].start : SHOTS[i].end ?? Math.max(T.dur, SHOTS[i].start + 3); SHOTS[i].dur = SHOTS[i].end - SHOTS[i].start; }
   DURATION = SHOTS[SHOTS.length - 1].end;
   window.OP.ready = true;
@@ -47,6 +48,9 @@ window.OP = {
   cues: () => (SHOTS.cues || []).map((c) => ({ gain: 1, ...c })).sort((a, b) => a.t - b.t),
   music: () => SHOTS.music || null,
   frame(i, qq = 0.92) { render(i / FPS); return out.toDataURL('image/jpeg', qq); },
+  /** mean brightness 0..255 of frame i (the opening check: frame 0 must be the picture, not black) */
+  luma(i) { render(i / FPS); const c = document.createElement('canvas'); c.width = 54; c.height = 96; const x = c.getContext('2d'); x.drawImage(out, 0, 0, 54, 96);
+    const d = x.getImageData(0, 0, 54, 96).data; let s = 0; for (let k = 0; k < d.length; k += 4) s += 0.2126 * d[k] + 0.7152 * d[k + 1] + 0.0722 * d[k + 2]; return s / (d.length / 4); },
   bench(i) { const t0 = performance.now(); render(i / FPS); return performance.now() - t0; },
   /** render frame i and return what is where: characters (box + face), marked props, the caption band */
   probe(i) {

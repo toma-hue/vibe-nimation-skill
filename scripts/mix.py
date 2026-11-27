@@ -108,6 +108,9 @@ def main():
         m, msr = sf.read(mus_p, dtype='float64', always_2d=True)
         if msr != SR:
             from scipy.signal import resample_poly; m = resample_poly(m, SR, msr, axis=0)
+        lv = np.abs(m).max(1); on = np.flatnonzero(lv > lv.max() * 0.1)           # cold open: skip a quiet / silent intro
+        if len(on) and on[0] > 0: m = m[max(0, on[0] - int(0.01 * SR)):]
+        k = min(len(m), int(0.015 * SR)); m[:k] *= np.linspace(0, 1, k)[:, None]   # 15 ms declick only
         if len(m) < N: m = np.concatenate([m] * (N // len(m) + 1))
         m = m[:N]; m = m / (np.sqrt(np.mean(m ** 2)) + 1e-9) * 10 ** ((-18 + a.music_db) / 20)
         duck = 1 - envelope(voice) * (1 - float((meta.get('music') or {}).get('duck', 0.45)))

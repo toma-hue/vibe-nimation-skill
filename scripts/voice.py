@@ -209,7 +209,7 @@ def main():
     P = Path(a.short); D = P / 'data'; C = D / 'lines'; C.mkdir(parents=True, exist_ok=True)
     script = json.loads((P / 'script.json').read_text(encoding='utf-8'))
     only = {int(x) for x in a.only.split(',')} if a.only else None
-    lead = float(script.get('lead_in', 0.4))
+    lead = 0.0   # cold open: the first line starts at frame 0, whatever script.json says (no lead-in)
     parts, lines, words, t = [np.zeros(int(lead * SR), np.float32)], [], [], lead
     for i, ln in enumerate(script['lines']):
         print(f'  line {i}: {ln["text"][:70]}', flush=True)
