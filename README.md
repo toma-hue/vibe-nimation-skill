@@ -35,6 +35,17 @@ git clone https://github.com/toma-hue/vibe-nimation-skill.git ~/Vibe-nimation/.c
 python3 ~/Vibe-nimation/.claude/skills/vibe-nimation/scripts/setup.py --root ~/Vibe-nimation
 ```
 
+## Actualizare
+Skill-ul are un singur branch, `main`. Ca să iei ultima versiune, rulează din nou aceeași comandă de instalare (nu mai
+descarcă uneltele și modelele deja instalate):
+
+```bash
+powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/toma-hue/vibe-nimation-skill/main/install.ps1 | iex"
+```
+
+Shorturile deja începute își păstrează copia veche a motorului; cere-i lui Claude „refresh la shortul N” (sau
+`vn.py new_short "<_lucru\episod>" N --refresh`).
+
 ## Folosire
 Pune episodul în `D:\Vibe-nimation\Episoade\`, deschide Claude Code în `D:\Vibe-nimation` și scrie, de exemplu:
 

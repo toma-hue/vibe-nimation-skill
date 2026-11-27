@@ -44,7 +44,12 @@ Say 'creez folderele'
 foreach ($d in @($Root, (Join-Path $Root 'Episoade'), (Join-Path $Root '.claude\skills'))) { New-Item -ItemType Directory -Force -Path $d | Out-Null }
 
 # 3 · skill-ul (clonat sau actualizat)
-if (Test-Path (Join-Path $Skill '.git')) { Say 'actualizez skill-ul'; git -C $Skill pull --ff-only | Out-Host }
+# un singur branch: main. Actualizarea aduce mereu ultima versiune de pe main (și revine pe main dacă era pe alt branch).
+if (Test-Path (Join-Path $Skill '.git')) {
+  Say 'actualizez skill-ul'
+  git -C $Skill fetch origin main | Out-Host
+  git -C $Skill checkout -B main origin/main | Out-Host
+}
 else { Say 'descarc skill-ul'; git clone $Repo $Skill | Out-Host }
 
 # 4 · instrucțiuni pentru Claude Code în proiect
